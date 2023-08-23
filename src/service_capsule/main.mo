@@ -6,8 +6,8 @@ import Text "mo:base/Text";
 import Hex "./utils/Hex";
 
 actor {
-  public query func greet() : async Text {
-    return "Hello!";
+  public query func version() : async Nat {
+    return 1;
   };
 
   // ------------------------- VETKD_SYSTEM_API -------------------------
