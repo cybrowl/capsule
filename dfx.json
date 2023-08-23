@@ -3,12 +3,16 @@
     "service_capsule": {
       "main": "src/service_capsule/main.mo",
       "type": "motoko"
+    },
+    "service_file_storage": {
+      "main": "src/service_file_storage/main.mo",
+      "type": "motoko"
     }
   },
   "defaults": {
     "build": {
       "args": "",
-      "packtool": ""
+      "packtool": "mops sources"
     }
   },
   "output_env_file": ".env",
