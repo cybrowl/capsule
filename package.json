@@ -1,0 +1,26 @@
+{
+  "name": "capsule",
+  "version": "0.1.0",
+  "description": "A locked will for money and files",
+  "keywords": [
+    "Internet Computer",
+    "Motoko",
+    "JavaScript",
+    "Canister"
+  ],
+  "scripts": {},
+  "dependencies": {
+    "@dfinity/agent": "^0.19.0",
+    "@dfinity/candid": "^0.19.0",
+    "@dfinity/principal": "^0.19.0"
+  },
+  "engines": {
+    "node": "^12 || ^14 || ^16 || ^18"
+  },
+  "browserslist": [
+    "last 2 chrome version",
+    "last 2 firefox version",
+    "last 2 safari version",
+    "last 2 edge version"
+  ]
+}
