@@ -2,7 +2,7 @@
 
 Description:
 
-A locked will for money and files / dead man switch
+A locked will for crypto coins and files / dead man switch
 
 ## Dev
 
