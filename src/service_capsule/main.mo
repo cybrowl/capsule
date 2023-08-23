@@ -25,7 +25,8 @@ actor {
     }) -> async ({ encrypted_key : Blob });
   };
 
-  let vetkd_system_api : VETKD_SYSTEM_API = actor ("aaaaa-aa");
+  // TODO: pricipal might need to change to something else in prod
+  let vetkd_system_api : VETKD_SYSTEM_API = actor ("ajuq4-ruaaa-aaaaa-qaaga-cai");
 
   public shared func app_vetkd_public_key(derivation_path : [Blob]) : async Text {
     let { public_key } = await vetkd_system_api.vetkd_public_key({
@@ -38,7 +39,7 @@ actor {
   };
 
   // symmetric
-  public shared ({ caller }) func symmetric_key_verification_key() : async Text {
+  public shared func symmetric_key_verification_key() : async Text {
     let { public_key } = await vetkd_system_api.vetkd_public_key({
       canister_id = null;
       derivation_path = Array.make(Text.encodeUtf8("symmetric_key"));

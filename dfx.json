@@ -7,6 +7,11 @@
     "service_file_storage": {
       "main": "src/service_file_storage/main.mo",
       "type": "motoko"
+    },
+    "vetkd_system_api": {
+      "candid": "src/vetkd_system/vetkd_system_api.did",
+      "type": "custom",
+      "wasm": "src/vetkd_system/vetkd_system_api.wasm"
     }
   },
   "defaults": {
