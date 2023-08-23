@@ -1,3 +1,5 @@
 # capsule
 
-A locked will for money and files
+Description:
+
+A locked will for money and files / dead man switch
