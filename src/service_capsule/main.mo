@@ -37,6 +37,7 @@ actor {
     Hex.encode(Blob.toArray(public_key));
   };
 
+  // symmetric
   public shared ({ caller }) func symmetric_key_verification_key() : async Text {
     let { public_key } = await vetkd_system_api.vetkd_public_key({
       canister_id = null;
@@ -59,6 +60,7 @@ actor {
     Hex.encode(Blob.toArray(encrypted_key));
   };
 
+  // ibe
   public shared func ibe_encryption_key() : async Text {
     let { public_key } = await vetkd_system_api.vetkd_public_key({
       canister_id = null;
