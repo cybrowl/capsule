@@ -1,10 +1,9 @@
-const test = require("tape");
-const { config } = require("dotenv");
-const { Ed25519KeyIdentity } = require("@dfinity/identity");
-
-// Canister Ids
-const { capsule_canister_id } = require("./actor_canister_ids.cjs");
-const { capsule_interface } = require("./actor_interface.cjs");
+import test from "tape";
+import { config } from "dotenv";
+import { Ed25519KeyIdentity } from "@dfinity/identity";
+import { capsule_canister_id } from "./actor_canister_ids.mjs";
+import { capsule_interface } from "./actor_interface.mjs";
+import { getActor } from "./actor.mjs";
 
 config();
 
@@ -17,7 +16,6 @@ const parseIdentity = (privateKeyHex) => {
 
 let motoko_identity = parseIdentity(process.env.MOTOKO_IDENTITY);
 
-const { getActor } = require("./actor.cjs");
 let capsule_actor = {};
 
 test("Setup Actors", async function () {

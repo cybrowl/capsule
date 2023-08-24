@@ -1,4 +1,4 @@
-const { HttpAgent, Actor } = require("@dfinity/agent");
+import { HttpAgent, Actor } from "@dfinity/agent";
 
 const HOST = "http://127.0.0.1:8080/";
 
@@ -37,6 +37,4 @@ const getActor = async (canisterId, idlFactory, identity) => {
   return actor;
 };
 
-module.exports = {
-  getActor,
-};
+export { getActor };
