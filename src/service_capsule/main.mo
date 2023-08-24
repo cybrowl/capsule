@@ -61,6 +61,18 @@ actor {
     Hex.encode(Blob.toArray(encrypted_key));
   };
 
+  public shared func encrypted_symmetric_key_by_pass(password : Text, encryption_public_key : Blob) : async Text {
+
+    let { encrypted_key } = await vetkd_system_api.vetkd_encrypted_key({
+      derivation_id = Text.encodeUtf8(password);
+      public_key_derivation_path = Array.make(Text.encodeUtf8("symmetric_key"));
+      key_id = { curve = #bls12_381; name = "test_key_1" };
+      encryption_public_key;
+    });
+
+    Hex.encode(Blob.toArray(encrypted_key));
+  };
+
   // ibe
   public shared func ibe_encryption_key() : async Text {
     let { public_key } = await vetkd_system_api.vetkd_public_key({
