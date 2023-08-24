@@ -1,5 +1,15 @@
 {
   "canisters": {
+    "ui": {
+      "dependencies": [],
+      "frontend": {
+        "entrypoint": "build/index.html"
+      },
+      "source": ["build"],
+      "gzip": true,
+      "optimize": "cycles",
+      "type": "assets"
+    },
     "capsule": {
       "main": "src/service_capsule/main.mo",
       "type": "motoko"
