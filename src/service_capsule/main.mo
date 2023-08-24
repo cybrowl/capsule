@@ -25,8 +25,8 @@ actor {
     }) -> async ({ encrypted_key : Blob });
   };
 
-  // TODO: pricipal might need to change to something else in prod
-  let vetkd_system_api : VETKD_SYSTEM_API = actor ("ajuq4-ruaaa-aaaaa-qaaga-cai");
+  // TODO: principal might need to change to something else in prod
+  let vetkd_system_api : VETKD_SYSTEM_API = actor ("cuj6u-c4aaa-aaaaa-qaajq-cai");
 
   public shared func app_vetkd_public_key(derivation_path : [Blob]) : async Text {
     let { public_key } = await vetkd_system_api.vetkd_public_key({
