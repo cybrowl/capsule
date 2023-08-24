@@ -32,4 +32,7 @@ test("Setup Actors", async function () {
 
     t.equal(version, 1n);
   });
+
+  // NOTE: too much browser dep code from crypto libs.
+  // Because of this will need to continue dev / testing in browser, so switching to UI
 });
