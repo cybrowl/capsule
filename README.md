@@ -8,6 +8,6 @@ A locked will for crypto coins and files / dead man switch
 
 ```
 dfx deploy vetkd_system_api
-dfx deploy service_capsule
-dfx deploy service_file_storage --argument='(false)'
+dfx deploy capsule
+dfx deploy file_storage --argument='(false)'
 ```
