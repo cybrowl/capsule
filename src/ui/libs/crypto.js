@@ -23,6 +23,8 @@ export class CryptoService {
 			new TextEncoder().encode('aes-256-gcm')
 		);
 
+		console.log('aes_256_gcm_key_raw: ', aes_256_gcm_key_raw);
+
 		this.vetAesGcmKey = await window.crypto.subtle.importKey(
 			'raw',
 			aes_256_gcm_key_raw,
@@ -30,6 +32,8 @@ export class CryptoService {
 			false,
 			['encrypt', 'decrypt']
 		);
+
+		console.log('this.vetAesGcmKey: ', this.vetAesGcmKey);
 
 		return 'key created';
 	}
