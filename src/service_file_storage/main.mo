@@ -1,5 +1,5 @@
-import Blob "mo:base/Blob";
 import { Buffer; toArray } "mo:base/Buffer";
+import Blob "mo:base/Blob";
 import Error "mo:base/Error";
 import Float "mo:base/Float";
 import Iter "mo:base/Iter";
@@ -163,22 +163,22 @@ actor class FileStorage(is_prod : Bool) = this {
         return #ok(asset.id);
     };
 
-    public shared ({ caller }) func delete_asset(id : Asset_ID) : async Result.Result<Text, ErrDeleteAsset> {
-        switch (Map.get(assets, thash, id)) {
-            case (?asset) {
-                if (asset.owner == Principal.toText(caller)) {
-                    Map.delete(assets, thash, id);
+    // public shared ({ caller }) func delete_asset(id : Asset_ID) : async Result.Result<Text, ErrDeleteAsset> {
+    //     switch (Map.get(assets, thash, id)) {
+    //         case (?asset) {
+    //             if (asset.owner == Principal.toText(caller)) {
+    //                 Map.delete(assets, thash, id);
 
-                    return #ok("Deleted Asset");
-                } else {
-                    return #err(#NotAuthorized(true));
-                };
-            };
-            case (_) {
-                return #err(#AssetNotFound(true));
-            };
-        };
-    };
+    //                 return #ok("Deleted Asset");
+    //             } else {
+    //                 return #err(#NotAuthorized(true));
+    //             };
+    //         };
+    //         case (_) {
+    //             return #err(#AssetNotFound(true));
+    //         };
+    //     };
+    // };
 
     public query func get_all_assets() : async [Asset] {
         var assets_list = Buffer<Asset>(0);

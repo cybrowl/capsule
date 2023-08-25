@@ -529,6 +529,11 @@ video {
   position: static;
 }
 
+.text-red-500 {
+  --tw-text-opacity: 1;
+  color: rgb(239 68 68 / var(--tw-text-opacity));
+}
+
 html, body {
   background-color: #1B1A22;
 }
