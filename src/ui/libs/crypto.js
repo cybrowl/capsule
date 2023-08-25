@@ -11,7 +11,18 @@ export class CryptoService {
 		const seed = window.crypto.getRandomValues(new Uint8Array(32));
 		const tsk = new vetkd.TransportSecretKey(seed);
 
-		const ek_bytes_hex = await this.actor.encrypted_symmetric_key_for_caller(tsk.public_key());
+		console.log('tsk: ', tsk);
+
+		const { ok: ek_bytes_hex, err: error } = await this.actor.encrypted_symmetric_key_for_caller(
+			tsk.public_key()
+		);
+
+		if (error) {
+			return error;
+		}
+
+		console.log('ek_bytes_hex: ', ek_bytes_hex);
+
 		const pk_bytes_hex = await this.actor.symmetric_key_verification_key();
 		const principal = await agent.Actor.agentOf(this.actor).getPrincipal();
 
