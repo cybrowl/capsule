@@ -1,6 +1,5 @@
 import { sveltekit } from '@sveltejs/kit/vite';
 import { resolve } from 'path';
-
 import { generateCanisterAliases, getEnvironmentPath } from './dfx.config.js';
 
 const isDevelopment = process.env.DFX_NETWORK !== 'ic' && process.env.DFX_NETWORK !== 'staging';
@@ -9,8 +8,6 @@ const isStaging = process.env.DFX_NETWORK === 'staging';
 
 const aliases = generateCanisterAliases();
 const environment = getEnvironmentPath(isDevelopment, isStaging);
-
-console.log('aliases: ', aliases);
 
 const envOptions = {
 	isDevelopment,

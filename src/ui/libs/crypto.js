@@ -30,6 +30,8 @@ export class CryptoService {
 			false,
 			['encrypt', 'decrypt']
 		);
+
+		return 'key created';
 	}
 
 	logout() {
