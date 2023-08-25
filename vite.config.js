@@ -1,45 +1,46 @@
-import { sveltekit } from "@sveltejs/kit/vite";
-import { resolve } from "path";
+import { sveltekit } from '@sveltejs/kit/vite';
+import { resolve } from 'path';
 
-import { generateCanisterAliases, getEnvironmentPath } from "./dfx.config.js";
+import { generateCanisterAliases, getEnvironmentPath } from './dfx.config.js';
 
-const isDevelopment =
-  process.env.DFX_NETWORK !== "ic" && process.env.DFX_NETWORK !== "staging";
-const isProduction = process.env.DFX_NETWORK === "ic";
-const isStaging = process.env.DFX_NETWORK === "staging";
+const isDevelopment = process.env.DFX_NETWORK !== 'ic' && process.env.DFX_NETWORK !== 'staging';
+const isProduction = process.env.DFX_NETWORK === 'ic';
+const isStaging = process.env.DFX_NETWORK === 'staging';
 
 const aliases = generateCanisterAliases();
 const environment = getEnvironmentPath(isDevelopment, isStaging);
 
+console.log('aliases: ', aliases);
+
 const envOptions = {
-  isDevelopment,
-  isProduction,
-  aliases,
-  environment,
+	isDevelopment,
+	isProduction,
+	aliases,
+	environment
 };
 
 const config = {
-  build: {
-    brotliSize: true,
-    cssCodeSplit: true,
-  },
-  server: {
-    fs: {
-      allow: ["config", ".dfx/local"],
-    },
-  },
-  resolve: {
-    alias: {
-      ...envOptions.aliases,
-      $components_ref: resolve("./src/ui/components/"),
-      $modals_ref: resolve("./src/ui/modals/"),
-      $stores_ref: resolve("./src/ui/store/"),
-      $utils: resolve("./src/ui/utils"),
-      environment: envOptions.environment,
-    },
-    dedupe: ["svelte"],
-  },
-  plugins: [sveltekit()],
+	build: {
+		brotliSize: true,
+		cssCodeSplit: true
+	},
+	server: {
+		fs: {
+			allow: ['config', '.dfx/local']
+		}
+	},
+	resolve: {
+		alias: {
+			...envOptions.aliases,
+			$components_ref: resolve('./src/ui/components/'),
+			$modals_ref: resolve('./src/ui/modals/'),
+			$stores_ref: resolve('./src/ui/store/'),
+			$utils: resolve('./src/ui/utils'),
+			environment: envOptions.environment
+		},
+		dedupe: ['svelte']
+	},
+	plugins: [sveltekit()]
 };
 
 export default config;

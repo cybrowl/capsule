@@ -1,50 +1,51 @@
 {
-  "name": "capsule",
-  "version": "0.2.0",
-  "type": "module",
-  "description": "A locked will for money and files",
-  "keywords": [
-    "Internet Computer",
-    "Motoko",
-    "JavaScript",
-    "Canister"
-  ],
-  "scripts": {
-    "build:css": "tailwindcss build src/ui/app.css -o src/ui/assets/output.css",
-    "build": "npm run build:css && vite build",
-    "generate_test_interface": "bash ./scripts/generate_can_test_interface.sh",
-    "test": "npm run generate_test_interface && tape tests/capsule.test.mjs"
-  },
-  "dependencies": {
-    "@dfinity/agent": "^0.19.0",
-    "@dfinity/candid": "^0.19.0",
-    "@dfinity/identity": "^0.19.0",
-    "@dfinity/principal": "^0.19.0",
-    "dotenv": "^16.3.1"
-  },
-  "engines": {
-    "node": "^12 || ^14 || ^16 || ^18"
-  },
-  "browserslist": [
-    "last 2 chrome version",
-    "last 2 firefox version",
-    "last 2 safari version",
-    "last 2 edge version"
-  ],
-  "devDependencies": {
-    "tape": "^5.6.6",
-    "@sveltejs/adapter-static": "^2.0.3",
-    "@sveltejs/kit": "^1.22.6",
-    "autoprefixer": "^10.4.13",
-    "postcss": "^8.4.5",
-    "postcss-load-config": "^3.1.1",
-    "prettier": "^2.8.0",
-    "prettier-plugin-motoko": "^0.2.3",
-    "prettier-plugin-svelte": "^2.8.1",
-    "svelte-preprocess": "5.0.4",
-    "tailwindcss": "^3.2.4",
-    "tap-nyan": "^1.1.0",
-    "uuid": "^9.0.0",
-    "vite": "^4.2.1"
-  }
+	"name": "capsule",
+	"version": "0.2.0",
+	"type": "module",
+	"description": "A locked will for money and files",
+	"keywords": [
+		"Internet Computer",
+		"Motoko",
+		"JavaScript",
+		"Canister"
+	],
+	"scripts": {
+		"build:css": "tailwindcss build src/ui/app.css -o src/ui/assets/output.css",
+		"build": "npm run build:css && vite build",
+		"generate_test_interface": "bash ./scripts/generate_can_test_interface.sh",
+		"test": "npm run generate_test_interface && tape tests/capsule.test.mjs"
+	},
+	"dependencies": {
+		"@dfinity/agent": "^0.19.0",
+		"@dfinity/candid": "^0.19.0",
+		"@dfinity/identity": "^0.19.0",
+		"@dfinity/principal": "^0.19.0",
+		"dotenv": "^16.3.1",
+		"ic-vetkd-utils": "file:./src/vetkd_utils"
+	},
+	"engines": {
+		"node": "^12 || ^14 || ^16 || ^18"
+	},
+	"browserslist": [
+		"last 2 chrome version",
+		"last 2 firefox version",
+		"last 2 safari version",
+		"last 2 edge version"
+	],
+	"devDependencies": {
+		"tape": "^5.6.6",
+		"@sveltejs/adapter-static": "^2.0.3",
+		"@sveltejs/kit": "^1.22.6",
+		"autoprefixer": "^10.4.13",
+		"postcss": "^8.4.5",
+		"postcss-load-config": "^3.1.1",
+		"prettier": "^2.8.0",
+		"prettier-plugin-motoko": "^0.2.3",
+		"prettier-plugin-svelte": "^2.8.1",
+		"svelte-preprocess": "5.0.4",
+		"tailwindcss": "^3.2.4",
+		"tap-nyan": "^1.1.0",
+		"uuid": "^9.0.0",
+		"vite": "^4.2.1"
+	}
 }

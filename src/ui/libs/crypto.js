@@ -1,6 +1,5 @@
 import * as agent from '@dfinity/agent';
-
-import * as vetkd from './ic_vetkd';
+import * as vetkd from 'ic-vetkd-utils';
 
 export class CryptoService {
 	constructor(actor) {

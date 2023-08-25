@@ -1,5 +1,14 @@
 <script>
-	console.log('hello world!');
+	import { CryptoService } from '../libs/crypto';
+	import { actor_capsule } from '$stores_ref/actors';
+
+	const cryptoService = new CryptoService($actor_capsule.actor);
+
+	const init = async () => {
+		console.log('cryptoService: ', await cryptoService.init());
+	};
+
+	init();
 </script>
 
 <svelte:head>
