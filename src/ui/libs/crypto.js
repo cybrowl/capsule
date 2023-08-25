@@ -7,21 +7,19 @@ export class CryptoService {
 		this.vetAesGcmKey = null;
 	}
 
-	async init() {
+	async init_caller() {
 		const seed = window.crypto.getRandomValues(new Uint8Array(32));
 		const tsk = new vetkd.TransportSecretKey(seed);
-
-		console.log('tsk: ', tsk);
 
 		const { ok: ek_bytes_hex, err: error } = await this.actor.encrypted_symmetric_key_for_caller(
 			tsk.public_key()
 		);
 
 		if (error) {
+			console.log('error: ', error);
+
 			return error;
 		}
-
-		console.log('ek_bytes_hex: ', ek_bytes_hex);
 
 		const pk_bytes_hex = await this.actor.symmetric_key_verification_key();
 		const principal = await agent.Actor.agentOf(this.actor).getPrincipal();
@@ -30,6 +28,40 @@ export class CryptoService {
 			hex_decode(ek_bytes_hex),
 			hex_decode(pk_bytes_hex),
 			principal.toUint8Array(),
+			32,
+			new TextEncoder().encode('aes-256-gcm')
+		);
+
+		this.vetAesGcmKey = await window.crypto.subtle.importKey(
+			'raw',
+			aes_256_gcm_key_raw,
+			'AES-GCM',
+			false,
+			['encrypt', 'decrypt']
+		);
+
+		return 'key created';
+	}
+
+	async init_pw(password) {
+		const seed = window.crypto.getRandomValues(new Uint8Array(32));
+		const tsk = new vetkd.TransportSecretKey(seed);
+
+		if (password === undefined) {
+			throw new Error('null password!');
+		}
+
+		const ek_bytes_hex = await this.actor.encrypted_symmetric_key_by_pass(
+			password,
+			tsk.public_key()
+		);
+
+		const pk_bytes_hex = await this.actor.symmetric_key_verification_key();
+
+		const aes_256_gcm_key_raw = tsk.decrypt_and_hash(
+			hex_decode(ek_bytes_hex),
+			hex_decode(pk_bytes_hex),
+			new TextEncoder().encode(password),
 			32,
 			new TextEncoder().encode('aes-256-gcm')
 		);
@@ -43,8 +75,6 @@ export class CryptoService {
 			false,
 			['encrypt', 'decrypt']
 		);
-
-		console.log('this.vetAesGcmKey: ', this.vetAesGcmKey);
 
 		return 'key created';
 	}

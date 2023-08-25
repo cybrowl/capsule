@@ -7,7 +7,7 @@
 		const super_secret_string = 'dogecoin is my safe word';
 
 		const cryptoService = new CryptoService($actor_capsule.actor);
-		await cryptoService.init();
+		await cryptoService.init_pw('ocean');
 
 		const encrypted_msg = await cryptoService.encrypt(super_secret_string);
 		const dencrypted_msg = await cryptoService.decrypt(encrypted_msg);

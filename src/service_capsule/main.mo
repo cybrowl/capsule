@@ -5,6 +5,7 @@ import Result "mo:base/Result";
 import Text "mo:base/Text";
 
 import Hex "./utils/Hex";
+import Debug "mo:base/Debug";
 
 actor {
 	public type ErrVetKD = {
@@ -70,9 +71,10 @@ actor {
 	};
 
 	public shared func encrypted_symmetric_key_by_pass(password : Text, encryption_public_key : Blob) : async Text {
+		let pass : Blob = Text.encodeUtf8(password);
 
 		let { encrypted_key } = await vetkd_system_api.vetkd_encrypted_key({
-			derivation_id = Text.encodeUtf8(password);
+			derivation_id = pass;
 			public_key_derivation_path = Array.make(Text.encodeUtf8("symmetric_key"));
 			key_id = { curve = #bls12_381; name = "test_key_1" };
 			encryption_public_key;
