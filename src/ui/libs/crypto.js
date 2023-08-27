@@ -90,7 +90,16 @@ export class CryptoService {
 			throw new Error('null shared secret!');
 		}
 
-		const data_encoded = Uint8Array.from([...data].map((ch) => ch.charCodeAt(0))).buffer;
+		let data_encoded;
+
+		if (typeof data === 'string') {
+			data_encoded = new TextEncoder().encode(data);
+		} else if (data instanceof ArrayBuffer) {
+			data_encoded = data;
+		} else {
+			throw new Error('Invalid data type for encryption. Expected string or ArrayBuffer.');
+		}
+
 		const iv = window.crypto.getRandomValues(new Uint8Array(12));
 
 		const ciphertext = await window.crypto.subtle.encrypt(
@@ -102,10 +111,10 @@ export class CryptoService {
 			data_encoded
 		);
 
-		const iv_decoded = String.fromCharCode(...new Uint8Array(iv));
-		const cipher_decoded = String.fromCharCode(...new Uint8Array(ciphertext));
+		const iv_base64 = this.arrayBufferToBase64(iv);
+		const cipher_base64 = this.arrayBufferToBase64(ciphertext);
 
-		return iv_decoded + cipher_decoded;
+		return iv_base64 + cipher_base64;
 	}
 
 	async decrypt(data) {
@@ -113,19 +122,13 @@ export class CryptoService {
 			throw new Error('null shared secret!');
 		}
 
-		if (data.length < 13) {
-			throw new Error('wrong encoding, too short to contain iv');
-		}
+		const iv_base64 = data.slice(0, 16);
+		const cipher_base64 = data.slice(16);
 
-		const iv_decoded = data.slice(0, 12);
-		const cipher_decoded = data.slice(12);
+		const iv_encoded = this.base64ToBuffer(iv_base64);
+		const ciphertext_encoded = this.base64ToBuffer(cipher_base64);
 
-		const iv_encoded = Uint8Array.from([...iv_decoded].map((ch) => ch.charCodeAt(0))).buffer;
-		const ciphertext_encoded = Uint8Array.from(
-			[...cipher_decoded].map((ch) => ch.charCodeAt(0))
-		).buffer;
-
-		let decrypted_data_encoded = await window.crypto.subtle.decrypt(
+		const decrypted_data_encoded = await window.crypto.subtle.decrypt(
 			{
 				name: 'AES-GCM',
 				iv: iv_encoded
@@ -134,9 +137,26 @@ export class CryptoService {
 			ciphertext_encoded
 		);
 
-		const decrypted_data_decoded = String.fromCharCode(...new Uint8Array(decrypted_data_encoded));
+		return decrypted_data_encoded;
+	}
 
-		return decrypted_data_decoded;
+	arrayBufferToBase64(buffer) {
+		let binary = '';
+		const bytes = new Uint8Array(buffer);
+		for (let i = 0; i < bytes.byteLength; i++) {
+			binary += String.fromCharCode(bytes[i]);
+		}
+		return btoa(binary);
+	}
+
+	base64ToBuffer(base64) {
+		const binStr = atob(base64);
+		const len = binStr.length;
+		const bytes = new Uint8Array(len);
+		for (let i = 0; i < len; i++) {
+			bytes[i] = binStr.charCodeAt(i);
+		}
+		return bytes.buffer;
 	}
 }
 

@@ -8,12 +8,22 @@ import Hex "./utils/Hex";
 import Debug "mo:base/Debug";
 
 actor {
+	stable var private_message = "";
+
 	public type ErrVetKD = {
 		#NotAuthorized : Bool;
 	};
 
 	public query func version() : async Nat {
 		return 1;
+	};
+
+	public query func get_msg() : async Text {
+		private_message;
+	};
+
+	public shared func save_msg(msg : Text) : async () {
+		private_message := msg;
 	};
 
 	// ------------------------- VETKD_SYSTEM_API -------------------------
