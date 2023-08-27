@@ -1,6 +1,6 @@
 import { writable } from 'svelte/store';
 import { AuthClient } from '@dfinity/auth-client';
-import { actor_capsule, createActor } from '$stores_ref/actors';
+import { actor_capsule, actor_file_storage, createActor } from '$stores_ref/actors';
 
 export const auth_actors = {};
 export const crypto_service = writable({});
@@ -10,8 +10,6 @@ let auth_client = {};
 // authenticate and pair with actor
 const authenticate_actor = async (actor_name, actor) => {
 	const isAuthenticated = await auth_client.isAuthenticated();
-
-	console.log('authenticate_actor isAuthenticated: ', isAuthenticated);
 
 	if (isAuthenticated) {
 		actor.update(() => ({
@@ -32,7 +30,10 @@ async function init_auth() {
 		}
 	});
 
-	const actors_list = [{ name: 'capsule', actor: actor_capsule }];
+	const actors_list = [
+		{ name: 'capsule', actor: actor_capsule },
+		{ name: 'file_storage', actor: actor_file_storage }
+	];
 
 	actors_list.forEach(({ name, actor }) => {
 		auth_actors[name] = () => authenticate_actor(name, actor);
@@ -71,9 +72,9 @@ const logout_actor = async (actor_name, actor) => {
 };
 
 export const auth_logout_all = async () => {
-	await $auth_client.logout();
+	await auth_client.logout();
 
-	authActors.forEach(({ name, actor }) => {
+	auth_actors.forEach(({ name, actor }) => {
 		logout_actor(name, actor);
 	});
 };

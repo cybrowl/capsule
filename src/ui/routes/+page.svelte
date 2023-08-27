@@ -1,5 +1,5 @@
 <script>
-	import { actor_capsule } from '$stores_ref/actors';
+	import { actor_capsule, actor_file_storage } from '$stores_ref/actors';
 	import { auth_actors, login, crypto_service } from '$stores_ref/auth_client';
 	import { get } from 'lodash';
 
@@ -67,9 +67,15 @@
 		if ($actor_capsule.loggedIn) {
 			// await $crypto_service.init_pw('ocean');
 			let version = await $actor_capsule.actor.version();
+			let version_2 = await $actor_file_storage.actor.version();
+
 			console.log('version: ', version);
+			console.log('version_2: ', version_2);
 
 			await $crypto_service.init_caller();
+
+			console.log('file_name: ', file_name);
+			console.log('file_type: ', file_type);
 
 			const encrypted_data = await $crypto_service.encrypt(file_array_buffer);
 

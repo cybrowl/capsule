@@ -11,6 +11,7 @@
 
 	const init_service = async () => {
 		await auth_actors.capsule();
+		await auth_actors.file_storage();
 
 		const cryptoService = new CryptoService($actor_capsule.actor);
 		crypto_service.set(cryptoService);

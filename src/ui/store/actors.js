@@ -1,5 +1,6 @@
 import { Actor, HttpAgent } from '@dfinity/agent';
 import { idlFactory as idl_capsule } from '$IDLcapsule';
+import { idlFactory as idl_file_storage } from '$IDLfile_storage';
 
 import { writable } from 'svelte/store';
 import environment from 'environment';
@@ -21,7 +22,8 @@ export function createActor(options) {
 	const agentOptions = { host };
 
 	const idl_reference = {
-		capsule: idl_capsule
+		capsule: idl_capsule,
+		file_storage: idl_file_storage
 	};
 
 	if (options && options.identity) {
@@ -48,4 +50,9 @@ export function createActor(options) {
 export const actor_capsule = writable({
 	loggedIn: false,
 	actor: createActor({ actor_name: 'capsule' })
+});
+
+export const actor_file_storage = writable({
+	loggedIn: false,
+	actor: createActor({ actor_name: 'file_storage' })
 });
