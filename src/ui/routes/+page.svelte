@@ -75,15 +75,15 @@
 
 			console.log('encrypted_data: ', encrypted_data);
 
-			await $actor_capsule.actor.save_msg(encrypted_data);
+			// await $actor_capsule.actor.save_msg(encrypted_data);
 
-			const response = await $actor_capsule.actor.get_msg();
+			// const response = await $actor_capsule.actor.get_msg();
 
-			console.log('response: ', response);
+			// console.log('response: ', response);
 
-			const decrypted_data = await $crypto_service.decrypt(response);
+			// const decrypted_data = await $crypto_service.decrypt(response);
 
-			downloadDecryptedFile(decrypted_data, 'yoda.jpeg', 'image/jpeg');
+			// downloadDecryptedFile(decrypted_data, 'yoda.jpeg', 'image/jpeg');
 		}
 	}
 </script>

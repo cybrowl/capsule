@@ -93,7 +93,7 @@ export class CryptoService {
 		let data_encoded;
 
 		if (typeof data === 'string') {
-			data_encoded = new TextEncoder().encode(data); // Using TextEncoder for proper UTF-8 encoding
+			data_encoded = new TextEncoder().encode(data);
 		} else if (data instanceof ArrayBuffer) {
 			data_encoded = data;
 		} else {
@@ -111,8 +111,6 @@ export class CryptoService {
 			data_encoded
 		);
 
-		console.log('ciphertext: ', ciphertext);
-
 		const iv_base64 = this.arrayBufferToBase64(iv);
 		const cipher_base64 = this.arrayBufferToBase64(ciphertext);
 
@@ -124,7 +122,7 @@ export class CryptoService {
 			throw new Error('null shared secret!');
 		}
 
-		const iv_base64 = data.slice(0, 16); // Note: Base64 encoded 12 bytes results in a 16 character string
+		const iv_base64 = data.slice(0, 16);
 		const cipher_base64 = data.slice(16);
 
 		const iv_encoded = this.base64ToBuffer(iv_base64);
@@ -139,24 +137,7 @@ export class CryptoService {
 			ciphertext_encoded
 		);
 
-		return decrypted_data_encoded; // Return the ArrayBuffer directly, don't convert it to a string
-	}
-
-	bufferToString(buf) {
-		const CHUNK_SIZE = 8192;
-		let str = '';
-		for (let i = 0; i < buf.length; i += CHUNK_SIZE) {
-			str += String.fromCharCode.apply(null, buf.subarray(i, i + CHUNK_SIZE));
-		}
-		return str;
-	}
-
-	stringToBuffer(str) {
-		const array = new Uint8Array(str.length);
-		for (let i = 0; i < str.length; i++) {
-			array[i] = str.charCodeAt(i);
-		}
-		return array.buffer;
+		return decrypted_data_encoded;
 	}
 
 	arrayBufferToBase64(buffer) {
