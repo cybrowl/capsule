@@ -14,6 +14,8 @@ export class AssetManager {
 
 		const chunk_ids = await Promise.all(promises);
 
+		console.log('chunk_ids: , ', chunk_ids);
+
 		return await this.commit({
 			chunk_ids,
 			checksum,
@@ -27,12 +29,14 @@ export class AssetManager {
 			throw new Error('file is required');
 		}
 
-		if (!(file instanceof Uint8Array)) {
-			throw new Error('file must be a Uint8Array');
-		}
+		// if (!(file instanceof Uint8Array)) {
+		// 	throw new Error('file must be a Uint8Array');
+		// }
 	}
 
 	async uploadChunk({ chunk, order }) {
+		console.log('chunk: ', chunk);
+
 		return this._actor.create_chunk(chunk, order);
 	}
 
@@ -71,6 +75,7 @@ export class AssetManager {
 
 		for (let start = 0, index = 0; start < file.length; start += chunkSize, index++) {
 			const chunk = file.slice(start, start + chunkSize);
+			console.log('chunk: ', chunk);
 
 			// TODO: encrypt chunk
 			checksum = this.updateChecksum(chunk, checksum);

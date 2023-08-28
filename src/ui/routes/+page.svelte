@@ -63,25 +63,35 @@
 		const file_name = get(file, 'name', '');
 		const file_type = get(file, 'type', '');
 		const file_array_buffer = await file.arrayBuffer();
+		const file_unit8Array = new Uint8Array(file_array_buffer);
 
 		e.target.value = '';
 
 		if ($actor_capsule.loggedIn) {
 			// await $crypto_service.init_pw('ocean');
+
 			let version = await $actor_capsule.actor.version();
 			const version_2 = await file_storage_lib.version();
 
+			await file_storage_lib.store(file_array_buffer, {
+				content_type: file_type,
+				filename: file_name
+			});
+
+			const all_assets = await file_storage_lib.getAllAssets();
+
 			console.log('version: ', version);
 			console.log('version_2: ', version_2);
+			console.log('all_assets: ', all_assets);
 
-			await $crypto_service.init_caller();
+			// await $crypto_service.init_caller();
 
-			console.log('file_name: ', file_name);
-			console.log('file_type: ', file_type);
+			// console.log('file_name: ', file_name);
+			// console.log('file_type: ', file_type);
 
-			const encrypted_data = await $crypto_service.encrypt(file_array_buffer);
+			// const encrypted_data = await $crypto_service.encrypt(file_array_buffer);
 
-			console.log('encrypted_data: ', encrypted_data);
+			// console.log('encrypted_data: ', encrypted_data);
 
 			// await $actor_capsule.actor.save_msg(encrypted_data);
 
