@@ -565,10 +565,6 @@ video {
   display: grid;
 }
 
-.hidden {
-  display: none;
-}
-
 .h-0 {
   height: 0px;
 }

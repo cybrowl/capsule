@@ -34,30 +34,44 @@
 		alert('Add card button clicked!');
 	}
 
-	function downloadDecryptedFile(decryptedData, fileName, mimeType = 'application/octet-stream') {
-		// Convert the decrypted data to a Blob
-		const blob = new Blob([decryptedData], { type: mimeType });
+	async function downloadFileAndConvertToBase64(fileUrl) {
+		// NOTE: some cors issue happening locally???
+		fetch(fileUrl)
+			.then(async (response) => {
+				console.log('response: ', response);
+				const arrayBuffer = await response.arrayBuffer();
+				const uint8Array = new Uint8Array(arrayBuffer);
+				const base64 = arrayBufferToBase64(uint8Array);
 
-		// Create an object URL from the Blob
-		const url = URL.createObjectURL(blob);
+				console.log('base64: ', base64);
+			})
+			.catch((error) => {
+				console.error('Fetch error: ', error);
+			});
+	}
 
-		// Create a hidden anchor element and set the href attribute to the object URL
-		const a = document.createElement('a');
-		a.style.display = 'none';
-		a.href = url;
-		a.download = fileName;
-
-		// Append the anchor to the document, trigger a click, and then remove it
-		document.body.appendChild(a);
-		a.click();
-		document.body.removeChild(a);
-
-		// Revoke the object URL to free up memory
-		URL.revokeObjectURL(url);
+	function arrayBufferToBase64(buffer) {
+		let binary = '';
+		const bytes = new Uint8Array(buffer);
+		const len = bytes.byteLength;
+		for (let i = 0; i < len; i++) {
+			binary += String.fromCharCode(bytes[i]);
+		}
+		return window.btoa(binary);
 	}
 
 	async function handleUploadClick(e) {
 		let file_storage_lib = new AssetManager($actor_file_storage.actor, $crypto_service);
+
+		downloadFileAndConvertToBase64(
+			'https://ifw4i-haaaa-aaaag-abrja-cai.raw.icp0.io/asset/c9c594c9-5b4-a24-6c3-810e272d4a15'
+		)
+			.then((base64) => {
+				console.log('Base64 encoded file:', base64);
+			})
+			.catch((error) => {
+				console.error('Error:', error);
+			});
 
 		const file = e.target.files[0];
 
@@ -78,10 +92,10 @@
 			console.log('version: ', version);
 			console.log('all_assets: ', all_assets);
 
-			await file_storage_lib.store(file_array_buffer, {
-				content_type: file_type,
-				filename: file_name
-			});
+			// await file_storage_lib.store(file_array_buffer, {
+			// 	content_type: file_type,
+			// 	filename: file_name
+			// });
 
 			// await $actor_capsule.actor.save_msg(encrypted_data);
 
