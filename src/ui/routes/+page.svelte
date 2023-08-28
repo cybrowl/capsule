@@ -36,14 +36,14 @@
 
 	async function downloadFileAndConvertToBase64(fileUrl) {
 		// NOTE: some cors issue happening locally???
-		fetch(fileUrl)
+		return fetch(fileUrl)
 			.then(async (response) => {
 				console.log('response: ', response);
 				const arrayBuffer = await response.arrayBuffer();
 				const uint8Array = new Uint8Array(arrayBuffer);
 				const base64 = arrayBufferToBase64(uint8Array);
 
-				console.log('base64: ', base64);
+				return base64;
 			})
 			.catch((error) => {
 				console.error('Fetch error: ', error);
