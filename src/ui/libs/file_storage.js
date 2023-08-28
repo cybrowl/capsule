@@ -1,6 +1,7 @@
 export class AssetManager {
-	constructor(actor) {
+	constructor(actor, crypto_lib) {
 		this._actor = actor;
+		this.crypto_lib = crypto_lib;
 	}
 
 	async store(file, { content_type, filename }) {
@@ -31,7 +32,9 @@ export class AssetManager {
 	}
 
 	async uploadChunk({ chunk, order }) {
-		return this._actor.create_chunk(new Uint8Array(chunk), order);
+		const chunk_unit_8 = new TextEncoder().encode(chunk);
+
+		return this._actor.create_chunk(chunk_unit_8, order);
 	}
 
 	async uploadChunkWithRetry({ chunk, order, retries = 3, delay = 1000 }) {
@@ -59,13 +62,11 @@ export class AssetManager {
 		for (let start = 0, index = 0; start < file.byteLength; start += chunkSize, index++) {
 			const chunk = file.slice(start, start + chunkSize);
 
-			console.log('chunk: ', chunk);
-
-			// const encryptedChunk = await this.encrypt(chunk); // This will encrypt the ArrayBuffer chunk
+			const encrypted_chunk = await this.crypto_lib.encrypt(chunk);
 
 			promises.push(
 				this.uploadChunkWithRetry({
-					chunk: chunk, // Now this is an encrypted base64 string
+					chunk: encrypted_chunk,
 					order: index
 				})
 			);

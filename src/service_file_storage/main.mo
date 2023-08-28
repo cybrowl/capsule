@@ -21,6 +21,8 @@ import Types "./types";
 
 import Utils "./utils";
 
+import Debug "mo:base/Debug";
+
 actor class FileStorage(is_prod : Bool) = this {
 	type Asset = Types.Asset;
 	type Asset_ID = Types.Asset_ID;
@@ -69,6 +71,8 @@ actor class FileStorage(is_prod : Bool) = this {
 	public shared ({ caller }) func create_chunk(content : Blob, order : Nat) : async Nat {
 		chunk_id_count := chunk_id_count + 1;
 
+		Debug.print(debug_show ("create_chunk", content.size()));
+
 		let asset_chunk : AssetChunk = {
 			content = content;
 			created = Time.now();
@@ -104,7 +108,6 @@ actor class FileStorage(is_prod : Bool) = this {
 		// Sort chunks by order
 		chunks_to_commit.sort(Utils.compare);
 
-		let modulo_value : Nat = 400_000_000;
 		var asset_content = Buffer<Blob>(0);
 		var content_size = 0;
 
@@ -115,6 +118,10 @@ actor class FileStorage(is_prod : Bool) = this {
 					if (chunk.owner != caller) {
 						return #err(#ChunkOwnerInvalid(true));
 					} else {
+						Debug.print(debug_show ("id", chunk.id));
+
+						Debug.print(debug_show (chunk.content.size()));
+
 						asset_content.add(chunk.content);
 						content_size := content_size + chunk.content.size();
 					};
