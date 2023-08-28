@@ -1,6 +1,3 @@
-import CRC32 from 'crc-32';
-import { Buffer } from 'buffer';
-
 export class AssetManager {
 	constructor(actor) {
 		this._actor = actor;
@@ -10,15 +7,14 @@ export class AssetManager {
 		this.validateFile(file);
 
 		const chunkSize = 2000000;
-		const { promises, checksum } = this.createUploadPromises(file, chunkSize);
 
+		const promises = await this.createUploadPromises(file, chunkSize);
 		const chunk_ids = await Promise.all(promises);
 
-		console.log('chunk_ids: , ', chunk_ids);
+		console.log('chunk_ids: ', chunk_ids);
 
 		return await this.commit({
 			chunk_ids,
-			checksum,
 			content_type,
 			filename
 		});
@@ -35,9 +31,7 @@ export class AssetManager {
 	}
 
 	async uploadChunk({ chunk, order }) {
-		console.log('chunk: ', chunk);
-
-		return this._actor.create_chunk(chunk, order);
+		return this._actor.create_chunk(new Uint8Array(chunk), order);
 	}
 
 	async uploadChunkWithRetry({ chunk, order, retries = 3, delay = 1000 }) {
@@ -59,51 +53,34 @@ export class AssetManager {
 		}
 	}
 
-	updateChecksum(chunk, checksum) {
-		const moduloValue = 400000000;
-
-		const signedChecksum = CRC32.buf(Buffer.from(chunk), 0);
-		const unsignedChecksum = signedChecksum >>> 0;
-		const updatedChecksum = (checksum + unsignedChecksum) % moduloValue;
-
-		return updatedChecksum;
-	}
-
-	createUploadPromises(file, chunkSize) {
+	async createUploadPromises(file, chunkSize) {
 		const promises = [];
-		let checksum = 0;
 
-		for (let start = 0, index = 0; start < file.length; start += chunkSize, index++) {
+		for (let start = 0, index = 0; start < file.byteLength; start += chunkSize, index++) {
 			const chunk = file.slice(start, start + chunkSize);
+
 			console.log('chunk: ', chunk);
 
-			// TODO: encrypt chunk
-			checksum = this.updateChecksum(chunk, checksum);
+			// const encryptedChunk = await this.encrypt(chunk); // This will encrypt the ArrayBuffer chunk
 
 			promises.push(
 				this.uploadChunkWithRetry({
-					chunk,
+					chunk: chunk, // Now this is an encrypted base64 string
 					order: index
 				})
 			);
 		}
 
-		return { promises, checksum };
+		return promises;
 	}
 
-	async commit({
-		chunk_ids,
-		checksum,
-		content_type = 'application/octet-stream',
-		filename = 'file'
-	}) {
+	async commit({ chunk_ids, content_type = 'application/octet-stream', filename = 'file' }) {
 		if (chunk_ids.length < 1) {
 			throw new Error('chunk_ids is required');
 		}
 
 		const response = await this._actor.commit_batch(chunk_ids, {
 			filename,
-			checksum: checksum,
 			content_encoding: { Identity: null },
 			content_type
 		});

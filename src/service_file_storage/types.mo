@@ -26,7 +26,6 @@ module {
 		content_encoding : ContentEncoding;
 		content_type : Text;
 		filename : Text;
-		checksum : Nat;
 	};
 
 	public type Asset = {
@@ -101,7 +100,6 @@ module {
 	public type ErrCommitBatch = {
 		#ChunkOwnerInvalid : Bool;
 		#ChunkNotFound : Bool;
-		#ChecksumInvalid : Bool;
 	};
 
 	public type ErrDeleteAsset = {

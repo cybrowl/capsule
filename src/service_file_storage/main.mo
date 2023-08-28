@@ -108,7 +108,7 @@ actor class FileStorage(is_prod : Bool) = this {
 		var asset_content = Buffer<Blob>(0);
 		var content_size = 0;
 
-		// Accumulate content and compute checksum
+		// Accumulate content
 		for (chunk_info in chunks_to_commit.vals()) {
 			switch (Map.get(chunks, nhash, chunk_info.id)) {
 				case (?chunk) {
