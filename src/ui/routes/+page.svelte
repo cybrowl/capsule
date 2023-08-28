@@ -2,9 +2,11 @@
 	import { actor_capsule, actor_file_storage } from '$stores_ref/actors';
 	import { auth_actors, login, crypto_service } from '$stores_ref/auth_client';
 	import { get } from 'lodash';
+	import { AssetManager } from '../libs/file_storage';
 
 	let file_input_elem;
 	let is_uploading_design_file = false;
+	let file_storage_lib = new AssetManager($actor_file_storage.actor);
 
 	function triggerFileSelectionBrowser(e) {
 		file_input_elem.click();
@@ -67,7 +69,7 @@
 		if ($actor_capsule.loggedIn) {
 			// await $crypto_service.init_pw('ocean');
 			let version = await $actor_capsule.actor.version();
-			let version_2 = await $actor_file_storage.actor.version();
+			const version_2 = await file_storage_lib.version();
 
 			console.log('version: ', version);
 			console.log('version_2: ', version_2);

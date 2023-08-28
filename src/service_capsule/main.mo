@@ -26,6 +26,8 @@ actor {
 		private_message := msg;
 	};
 
+	// check if capsule id has been generated
+
 	// ------------------------- VETKD_SYSTEM_API -------------------------
 	type VETKD_SYSTEM_API = actor {
 		vetkd_public_key : ({
@@ -69,6 +71,11 @@ actor {
 		if (Principal.isAnonymous(caller)) {
 			return #err(#NotAuthorized(true));
 		};
+
+		//TODO: check how long until unlock happens for capsule
+		// for testing make it 10 secs
+		// one owner per capsule
+		// capsule can only be claimed once (method to claim capsule if authenticated)
 
 		let { encrypted_key } = await vetkd_system_api.vetkd_encrypted_key({
 			derivation_id = Principal.toBlob(caller);

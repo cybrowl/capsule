@@ -1,7 +1,7 @@
-const CRC32 = require('crc-32');
-const { Buffer } = require('buffer');
+import CRC32 from 'crc-32';
+import { Buffer } from 'buffer';
 
-class AssetManager {
+export class AssetManager {
 	constructor(actor) {
 		this._actor = actor;
 	}
@@ -130,5 +130,3 @@ class AssetManager {
 		return this._actor.version();
 	}
 }
-
-module.exports = AssetManager;
