@@ -25,7 +25,7 @@
 	}
 
 	function handleLoginClick() {
-		login(false, handleAuth);
+		login(true, handleAuth);
 	}
 
 	function handleCreateAccountClick() {
@@ -33,41 +33,55 @@
 		alert('Add card button clicked!');
 	}
 
-	async function downloadFileAndConvertToBase64(fileUrl) {
+	async function fetchFile(fileUrl) {
 		// NOTE: some cors issue happening locally???
 		return fetch(fileUrl)
 			.then(async (response) => {
-				console.log('response: ', response);
-				const arrayBuffer = await response.arrayBuffer();
-				const uint8Array = new Uint8Array(arrayBuffer);
-				const base64 = arrayBufferToBase64(uint8Array);
+				const file_array_buffer = await response.arrayBuffer();
 
-				return base64;
+				return file_array_buffer;
 			})
 			.catch((error) => {
 				console.error('Fetch error: ', error);
 			});
 	}
 
-	function arrayBufferToBase64(buffer) {
-		let binary = '';
-		const bytes = new Uint8Array(buffer);
-		const len = bytes.byteLength;
-		for (let i = 0; i < len; i++) {
-			binary += String.fromCharCode(bytes[i]);
-		}
-		return window.btoa(binary);
+	function downloadFile(arrayBuffer, filename) {
+		// Create a blob from the ArrayBuffer
+		const blob = new Blob([arrayBuffer]);
+
+		// Create a URL for the blob
+		const url = window.URL.createObjectURL(blob);
+
+		// Create a temporary anchor element
+		const a = document.createElement('a');
+		a.style.display = 'none';
+		a.href = url;
+		a.download = filename;
+
+		// Append anchor to the body, click it, then remove it
+		document.body.appendChild(a);
+		a.click();
+		document.body.removeChild(a);
+
+		// Release the created URL
+		setTimeout(function () {
+			window.URL.revokeObjectURL(url);
+		}, 100);
 	}
 
 	async function handleUploadClick(e) {
 		let file_storage_lib = new AssetManager($actor_file_storage.actor, $crypto_service);
 		await $crypto_service.init_caller();
 
-		downloadFileAndConvertToBase64(
-			'https://ifw4i-haaaa-aaaag-abrja-cai.raw.icp0.io/asset/c9c594c9-5b4-a24-6c3-810e272d4a15'
+		fetchFile(
+			'https://pvbg6-liaaa-aaaag-abwha-cai.raw.icp0.io/asset/6acf708a-68b-05a-b6f-ea08b9762ac2'
 		)
-			.then(async (encrypted_file_base64) => {
-				const decrypted_data = await $crypto_service.decrypt(encrypted_file_base64);
+			.then(async (encrypted_file_buffer) => {
+				//TODO: decrypt in chunks 2MB?
+				const decrypted_data = await $crypto_service.decrypt(encrypted_file_buffer);
+
+				downloadFile(decrypted_data, 'poro.jpeg');
 
 				console.log('decrypted_data: ', decrypted_data);
 			})

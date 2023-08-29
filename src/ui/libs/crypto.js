@@ -111,10 +111,7 @@ export class CryptoService {
 			data_encoded
 		);
 
-		const iv_base64 = this.arrayBufferToBase64(iv);
-		const cipher_base64 = this.arrayBufferToBase64(ciphertext);
-
-		return iv_base64 + cipher_base64;
+		return this.concatArrayBuffers(iv, ciphertext);
 	}
 
 	async decrypt(data) {
@@ -122,50 +119,30 @@ export class CryptoService {
 			throw new Error('null shared secret!');
 		}
 
-		const iv_base64 = data.slice(0, 16);
-		const cipher_base64 = data.slice(16);
-
-		const iv_encoded = this.base64ToBuffer(iv_base64);
-		const ciphertext_encoded = this.base64ToBuffer(cipher_base64);
-
-		console.log('iv_encoded: ', iv_encoded);
-		console.log('ciphertext_encoded: ', ciphertext_encoded);
+		const iv = data.slice(0, 12);
+		const ciphertext = data.slice(12);
 
 		try {
-			const decrypted_data_encoded = await window.crypto.subtle.decrypt(
+			const decrypted_data = await window.crypto.subtle.decrypt(
 				{
 					name: 'AES-GCM',
-					iv: iv_encoded
+					iv: iv
 				},
 				this.vetAesGcmKey,
-				ciphertext_encoded
+				ciphertext
 			);
 
-			console.log('decrypted_data_encoded: ', decrypted_data_encoded);
-
-			return decrypted_data_encoded;
+			return decrypted_data;
 		} catch (error) {
 			console.log('err: ', error);
 		}
 	}
 
-	arrayBufferToBase64(buffer) {
-		let binary = '';
-		const bytes = new Uint8Array(buffer);
-		for (let i = 0; i < bytes.byteLength; i++) {
-			binary += String.fromCharCode(bytes[i]);
-		}
-		return btoa(binary);
-	}
-
-	base64ToBuffer(base64) {
-		const binStr = atob(base64);
-		const len = binStr.length;
-		const bytes = new Uint8Array(len);
-		for (let i = 0; i < len; i++) {
-			bytes[i] = binStr.charCodeAt(i);
-		}
-		return bytes.buffer;
+	concatArrayBuffers(buffer1, buffer2) {
+		const tmp = new Uint8Array(buffer1.byteLength + buffer2.byteLength);
+		tmp.set(new Uint8Array(buffer1), 0);
+		tmp.set(new Uint8Array(buffer2), buffer1.byteLength);
+		return tmp.buffer;
 	}
 }
 
