@@ -34,8 +34,6 @@ export class AssetManager {
 	async uploadChunk({ chunk, order }) {
 		const chunk_unit_8 = new Uint8Array(chunk);
 
-		console.log('chunk_unit_8: ', chunk_unit_8);
-
 		return this._actor.create_chunk(chunk_unit_8, order);
 	}
 
@@ -65,9 +63,6 @@ export class AssetManager {
 			const chunk = file.slice(start, start + chunkSize);
 
 			const encrypted_chunk = await this.crypto_lib.encrypt(chunk);
-
-			console.log('encrypted_chunk:', encrypted_chunk);
-			console.log('chunk_unit_8:', new Uint8Array(encrypted_chunk));
 
 			promises.push(
 				this.uploadChunkWithRetry({

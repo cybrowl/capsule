@@ -90,28 +90,22 @@ export class CryptoService {
 			throw new Error('null shared secret!');
 		}
 
-		let data_encoded;
-
-		if (typeof data === 'string') {
-			data_encoded = new TextEncoder().encode(data);
-		} else if (data instanceof ArrayBuffer) {
-			data_encoded = data;
-		} else {
-			throw new Error('Invalid data type for encryption. Expected string or ArrayBuffer.');
-		}
-
 		const iv = window.crypto.getRandomValues(new Uint8Array(12));
 
-		const ciphertext = await window.crypto.subtle.encrypt(
-			{
-				name: 'AES-GCM',
-				iv: iv
-			},
-			this.vetAesGcmKey,
-			data_encoded
-		);
+		try {
+			const ciphertext = await window.crypto.subtle.encrypt(
+				{
+					name: 'AES-GCM',
+					iv: iv
+				},
+				this.vetAesGcmKey,
+				data
+			);
 
-		return this.concatArrayBuffers(iv, ciphertext);
+			return this.concatArrayBuffers(iv, ciphertext);
+		} catch (error) {
+			console.log('CryptoService.encrypt Err: ', error);
+		}
 	}
 
 	async decrypt(data) {
@@ -134,7 +128,7 @@ export class CryptoService {
 
 			return decrypted_data;
 		} catch (error) {
-			console.log('err: ', error);
+			console.log('CryptoService.decrypt Err: ', error);
 		}
 	}
 

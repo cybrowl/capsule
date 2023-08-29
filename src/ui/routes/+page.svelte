@@ -70,24 +70,54 @@
 		}, 100);
 	}
 
+	async function decryptInChunks(encryptedBuffer) {
+		const CHUNK_SIZE = 2000000;
+		const ENCRYPTED_CHUNK_SIZE = CHUNK_SIZE + 28;
+
+		const decryptedChunks = [];
+		const numChunks = Math.ceil(encryptedBuffer.byteLength / ENCRYPTED_CHUNK_SIZE);
+
+		for (let i = 0; i < numChunks; i++) {
+			const startByte = i * ENCRYPTED_CHUNK_SIZE;
+			const endByte = Math.min(encryptedBuffer.byteLength, startByte + ENCRYPTED_CHUNK_SIZE);
+			const chunk = encryptedBuffer.slice(startByte, endByte);
+
+			const decryptedChunk = await $crypto_service.decrypt(chunk);
+
+			decryptedChunks.push(decryptedChunk);
+		}
+
+		// Combine decrypted chunks into a single buffer
+		let totalSize = decryptedChunks.reduce((acc, chunk) => acc + chunk.byteLength, 0);
+		let combined = new Uint8Array(totalSize);
+		let position = 0;
+		for (let chunk of decryptedChunks) {
+			combined.set(new Uint8Array(chunk), position);
+			position += chunk.byteLength;
+		}
+
+		return combined.buffer;
+	}
+
 	async function handleUploadClick(e) {
 		let file_storage_lib = new AssetManager($actor_file_storage.actor, $crypto_service);
 		await $crypto_service.init_caller();
 
-		fetchFile(
-			'https://pvbg6-liaaa-aaaag-abwha-cai.raw.icp0.io/asset/6acf708a-68b-05a-b6f-ea08b9762ac2'
-		)
-			.then(async (encrypted_file_buffer) => {
-				//TODO: decrypt in chunks 2MB?
-				const decrypted_data = await $crypto_service.decrypt(encrypted_file_buffer);
+		// fetchFile(
+		// 	'https://pvbg6-liaaa-aaaag-abwha-cai.raw.icp0.io/asset/47306e56-29a-900-d76-91404c791105'
+		// )
+		// 	.then(async (encrypted_file_buffer) => {
+		// 		//TODO: decrypt in chunks 2MB?
 
-				downloadFile(decrypted_data, 'poro.jpeg');
+		// 		const decrypted_data = await decryptInChunks(encrypted_file_buffer);
 
-				console.log('decrypted_data: ', decrypted_data);
-			})
-			.catch((error) => {
-				console.error('Error:', error);
-			});
+		// 		downloadFile(decrypted_data, 'testing.jpeg');
+
+		// 		// console.log('decrypted_data: ', decrypted_data);
+		// 	})
+		// 	.catch((error) => {
+		// 		console.error('Error:', error);
+		// 	});
 
 		const file = e.target.files[0];
 
@@ -107,10 +137,10 @@
 			console.log('version: ', version);
 			console.log('all_assets: ', all_assets);
 
-			// await file_storage_lib.store(file_array_buffer, {
-			// 	content_type: file_type,
-			// 	filename: file_name
-			// });
+			await file_storage_lib.store(file_array_buffer, {
+				content_type: file_type,
+				filename: file_name
+			});
 		}
 	}
 </script>
