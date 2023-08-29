@@ -5,7 +5,6 @@
 	import { AssetManager } from '../libs/file_storage';
 
 	let file_input_elem;
-	let is_uploading_design_file = false;
 
 	function triggerFileSelectionBrowser(e) {
 		file_input_elem.click();
@@ -62,12 +61,15 @@
 
 	async function handleUploadClick(e) {
 		let file_storage_lib = new AssetManager($actor_file_storage.actor, $crypto_service);
+		await $crypto_service.init_caller();
 
 		downloadFileAndConvertToBase64(
 			'https://ifw4i-haaaa-aaaag-abrja-cai.raw.icp0.io/asset/c9c594c9-5b4-a24-6c3-810e272d4a15'
 		)
-			.then((base64) => {
-				console.log('Base64 encoded file:', base64);
+			.then(async (encrypted_file_base64) => {
+				const decrypted_data = await $crypto_service.decrypt(encrypted_file_base64);
+
+				console.log('decrypted_data: ', decrypted_data);
 			})
 			.catch((error) => {
 				console.error('Error:', error);
@@ -83,7 +85,6 @@
 
 		if ($actor_capsule.loggedIn) {
 			// Get encrypted key
-			await $crypto_service.init_caller();
 			// await $crypto_service.init_pw('ocean');
 
 			let version = await $actor_capsule.actor.version();
@@ -96,16 +97,6 @@
 			// 	content_type: file_type,
 			// 	filename: file_name
 			// });
-
-			// await $actor_capsule.actor.save_msg(encrypted_data);
-
-			// const response = await $actor_capsule.actor.get_msg();
-
-			// console.log('response: ', response);
-
-			// const decrypted_data = await $crypto_service.decrypt(response);
-
-			// downloadDecryptedFile(decrypted_data, 'yoda.jpeg', 'image/jpeg');
 		}
 	}
 </script>

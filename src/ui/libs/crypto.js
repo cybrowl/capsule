@@ -128,16 +128,25 @@ export class CryptoService {
 		const iv_encoded = this.base64ToBuffer(iv_base64);
 		const ciphertext_encoded = this.base64ToBuffer(cipher_base64);
 
-		const decrypted_data_encoded = await window.crypto.subtle.decrypt(
-			{
-				name: 'AES-GCM',
-				iv: iv_encoded
-			},
-			this.vetAesGcmKey,
-			ciphertext_encoded
-		);
+		console.log('iv_encoded: ', iv_encoded);
+		console.log('ciphertext_encoded: ', ciphertext_encoded);
 
-		return decrypted_data_encoded;
+		try {
+			const decrypted_data_encoded = await window.crypto.subtle.decrypt(
+				{
+					name: 'AES-GCM',
+					iv: iv_encoded
+				},
+				this.vetAesGcmKey,
+				ciphertext_encoded
+			);
+
+			console.log('decrypted_data_encoded: ', decrypted_data_encoded);
+
+			return decrypted_data_encoded;
+		} catch (error) {
+			console.log('err: ', error);
+		}
 	}
 
 	arrayBufferToBase64(buffer) {
