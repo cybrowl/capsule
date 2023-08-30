@@ -15,8 +15,6 @@ import Text "mo:base/Text";
 import Time "mo:base/Time";
 import Timer "mo:base/Timer";
 
-import { ofBlob } "./CRC32";
-
 import Types "./types";
 
 import Utils "./utils";
