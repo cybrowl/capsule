@@ -1,32 +1,81 @@
 import Array "mo:base/Array";
 import Blob "mo:base/Blob";
+import Debug "mo:base/Debug";
+import Map "mo:hash-map";
 import Principal "mo:base/Principal";
 import Result "mo:base/Result";
 import Text "mo:base/Text";
 
 import Hex "./utils/Hex";
-import Debug "mo:base/Debug";
 
 actor {
 	stable var private_message = "";
+	let { thash } = Map;
 
 	public type ErrVetKD = {
 		#NotAuthorized : Bool;
 	};
 
+	public type Asset = {
+		created : Int;
+		content_type : Text;
+		filename : Text;
+		url : Text;
+	};
+
+	type CapsuleId = Text;
+
+	type Capsule = {
+		id : CapsuleId;
+		owner : Principal;
+		authorized : ?[Text];
+		locked_minutes : Nat;
+		locked_start : Nat;
+		files : ?[Asset];
+	};
+
+	private var capsules = Map.new<CapsuleId, Capsule>(thash);
+
 	public query func version() : async Nat {
 		return 1;
 	};
 
-	public query func get_msg() : async Text {
-		private_message;
+	public query func check_capsule_exists(id : CapsuleId) : async Bool {
+		switch (Map.get(capsules, thash, id)) {
+			case (?capsule) {
+				return true;
+			};
+			case (_) {
+				return false;
+			};
+		};
 	};
 
-	public shared func save_msg(msg : Text) : async () {
-		private_message := msg;
-	};
+	public shared ({ caller }) func create_capsule(id : CapsuleId) : async Result.Result<Text, Text> {
+		if (Principal.isAnonymous(caller)) {
+			return #err("Anon");
+		};
 
-	// check if capsule id has been generated
+		switch (Map.get(capsules, thash, id)) {
+			case (?capsule) {
+				return #err("CapsuleExists");
+			};
+			case (_) {
+				let capsule : Capsule = {
+					id = id;
+					owner = caller;
+					authorized = null;
+					locked_minutes = 0;
+					locked_start = 0;
+					files = null;
+				};
+
+				ignore Map.put(capsules, thash, id, capsule);
+
+				return #ok("Created Capsule");
+			};
+		};
+	};
 
 	// ------------------------- VETKD_SYSTEM_API -------------------------
 	type VETKD_SYSTEM_API = actor {

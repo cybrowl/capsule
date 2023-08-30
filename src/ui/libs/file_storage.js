@@ -12,8 +12,6 @@ export class AssetManager {
 		const promises = await this.createUploadPromises(file, chunkSize);
 		const chunk_ids = await Promise.all(promises);
 
-		console.log('chunk_ids: ', chunk_ids);
-
 		return await this.commit({
 			chunk_ids,
 			content_type,
