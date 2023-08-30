@@ -18,16 +18,16 @@ actor {
 	public type Asset = {
 		created : Int;
 		content_type : Text;
-		filename : Text;
-		url : Text;
+		filename : Text; // info is public, not PII
+		url : Text; // info is public but encrypted
 	};
 
 	type CapsuleId = Text;
 
 	type Capsule = {
 		id : CapsuleId;
-		owner : Principal;
-		authorized : ?[Text];
+		owner : Principal; // anon already
+		authorized : ?[Text]; // anon already
 		locked_minutes : Nat;
 		locked_start : Nat;
 		files : ?[Asset];
@@ -54,6 +54,8 @@ actor {
 		if (Principal.isAnonymous(caller)) {
 			return #err("Anon");
 		};
+
+		// TODO: if capsule is locked do NOT return capsule info
 
 		switch (Map.get(capsules, thash, id)) {
 			case (?capsule) {
@@ -117,7 +119,7 @@ actor {
 		}) -> async ({ encrypted_key : Blob });
 	};
 
-	// TODO: principal might need to change to something else in prod
+	// NOTE: this changes if in local vs prod
 	let vetkd_system_api : VETKD_SYSTEM_API = actor ("p4cnc-5aaaa-aaaag-abwgq-cai");
 
 	public shared func app_vetkd_public_key(derivation_path : [Blob]) : async Text {
