@@ -103,21 +103,21 @@
 		let file_storage_lib = new AssetManager($actor_file_storage.actor, $crypto_service);
 		await $crypto_service.init_caller();
 
-		// fetchFile(
-		// 	'https://pvbg6-liaaa-aaaag-abwha-cai.raw.icp0.io/asset/47306e56-29a-900-d76-91404c791105'
-		// )
-		// 	.then(async (encrypted_file_buffer) => {
-		// 		//TODO: decrypt in chunks 2MB?
+		fetchFile(
+			'https://pvbg6-liaaa-aaaag-abwha-cai.raw.icp0.io/asset/66e5088c-e6b-fdc-75c-f1da4af0b0c5'
+		)
+			.then(async (encrypted_file_buffer) => {
+				//TODO: decrypt in chunks 2MB?
 
-		// 		const decrypted_data = await decryptInChunks(encrypted_file_buffer);
+				const decrypted_data = await decryptInChunks(encrypted_file_buffer);
 
-		// 		downloadFile(decrypted_data, 'testing.jpeg');
+				downloadFile(decrypted_data, 'testing.mov');
 
-		// 		// console.log('decrypted_data: ', decrypted_data);
-		// 	})
-		// 	.catch((error) => {
-		// 		console.error('Error:', error);
-		// 	});
+				// console.log('decrypted_data: ', decrypted_data);
+			})
+			.catch((error) => {
+				console.error('Error:', error);
+			});
 
 		const file = e.target.files[0];
 
