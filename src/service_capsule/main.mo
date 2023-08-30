@@ -9,7 +9,6 @@ import Text "mo:base/Text";
 import Hex "./utils/Hex";
 
 actor {
-	stable var private_message = "";
 	let { thash } = Map;
 
 	public type ErrVetKD = {
@@ -51,6 +50,26 @@ actor {
 		};
 	};
 
+	public query ({ caller }) func get_capsule(id : CapsuleId) : async Result.Result<Capsule, Text> {
+		if (Principal.isAnonymous(caller)) {
+			return #err("Anon");
+		};
+
+		switch (Map.get(capsules, thash, id)) {
+			case (?capsule) {
+				if (Principal.equal(caller, capsule.owner)) {
+					return #ok(capsule);
+				} else {
+					return #err("Not Owner");
+				};
+
+			};
+			case (_) {
+				return #err("Not Found");
+			};
+		};
+	};
+
 	public shared ({ caller }) func create_capsule(id : CapsuleId) : async Result.Result<Text, Text> {
 		if (Principal.isAnonymous(caller)) {
 			return #err("Anon");
@@ -76,6 +95,12 @@ actor {
 			};
 		};
 	};
+
+	// update capsule time
+
+	// update capsule authorized
+
+	// update capsule files
 
 	// ------------------------- VETKD_SYSTEM_API -------------------------
 	type VETKD_SYSTEM_API = actor {
@@ -107,6 +132,8 @@ actor {
 
 	// symmetric
 	public shared func symmetric_key_verification_key() : async Text {
+		// TODO: if capsule is locked do NOT verify key
+
 		let { public_key } = await vetkd_system_api.vetkd_public_key({
 			canister_id = null;
 			derivation_path = Array.make(Text.encodeUtf8("symmetric_key"));
@@ -121,10 +148,7 @@ actor {
 			return #err(#NotAuthorized(true));
 		};
 
-		//TODO: check how long until unlock happens for capsule
-		// for testing make it 10 secs
-		// one owner per capsule
-		// capsule can only be claimed once (method to claim capsule if authenticated)
+		// TODO: if capsule is locked do NOT return key
 
 		let { encrypted_key } = await vetkd_system_api.vetkd_encrypted_key({
 			derivation_id = Principal.toBlob(caller);
