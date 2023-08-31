@@ -12,7 +12,8 @@
 		},
 		"capsule": {
 			"main": "src/service_capsule/main.mo",
-			"type": "motoko"
+			"type": "motoko",
+			"dependencies": ["file_storage"]
 		},
 		"file_storage": {
 			"main": "src/service_file_storage/main.mo",

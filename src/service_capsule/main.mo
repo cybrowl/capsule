@@ -80,7 +80,13 @@ actor {
 		switch (Map.get(capsules, thash, id)) {
 			case (?capsule) {
 				if (Principal.equal(caller, capsule.owner)) {
-					return #ok(capsule);
+					let anonymousPrincipal : Blob = "\04";
+
+					let capsule_updated : Capsule = {
+						capsule with owner = Principal.fromBlob(anonymousPrincipal)
+					};
+
+					return #ok(capsule_updated);
 				} else {
 					return #err(#NotOwner(true));
 				};
