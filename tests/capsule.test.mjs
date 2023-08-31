@@ -9,6 +9,7 @@ import { v4 as uuidv4 } from 'uuid';
 config();
 
 // NOTE: encryption is not tested because too many dep on browser
+// Testing is done in browser
 
 const parseIdentity = (privateKeyHex) => {
 	const privateKey = Uint8Array.from(Buffer.from(privateKeyHex, 'hex'));
@@ -46,9 +47,9 @@ test('Setup Actors', async function () {
 		t.equal(version_r, 1n);
 	});
 
-	test('Capsule[motoko].check_capsule_exists(): with invalid id => #err - false', async function (t) {
+	test('Capsule[random].check_capsule_exists(): with invalid id => #err - false', async function (t) {
 		let capsule_id = uuidv4();
-		let exists = await capsule_actor.motoko.check_capsule_exists(capsule_id);
+		let exists = await capsule_actor.random.check_capsule_exists(capsule_id);
 
 		t.equal(exists, false);
 	});
@@ -70,6 +71,12 @@ test('Setup Actors', async function () {
 
 		t.deepEqual(err_creating, { CapsuleExists: true });
 		t.equal(created, undefined);
+	});
+
+	test('Capsule[random].check_capsule_exists(): => #ok - CapsuleExists', async function (t) {
+		let exists = await capsule_actor.random.check_capsule_exists(capsule_x);
+
+		t.equal(exists, true);
 	});
 
 	test('Capsule[random].get_capsule(): with valid id => #ok - capsule', async function (t) {
