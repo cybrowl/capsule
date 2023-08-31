@@ -1,5 +1,6 @@
 import Array "mo:base/Array";
 import Blob "mo:base/Blob";
+import Buffer "mo:base/Buffer";
 import Debug "mo:base/Debug";
 import Map "mo:hash-map";
 import Principal "mo:base/Principal";
@@ -7,6 +8,8 @@ import Result "mo:base/Result";
 import Text "mo:base/Text";
 
 import Hex "./utils/Hex";
+
+import FileStorage "canister:file_storage";
 
 actor {
 	let { thash } = Map;
@@ -18,19 +21,20 @@ actor {
 	public type Asset = {
 		created : Int;
 		content_type : Text;
-		filename : Text; // info is public, not PII
-		url : Text; // info is public but encrypted
+		filename : Text; // filename is public, not PII
+		url : Text; // url is public but encrypted data
 	};
 
 	type CapsuleId = Text;
+	type Asset_ID = Text;
 
 	type Capsule = {
 		id : CapsuleId;
 		owner : Principal; // anon already
-		authorized : ?[Text]; // anon already
+		authorized : [Text]; // anon already
 		locked_minutes : Nat;
 		locked_start : Nat;
-		files : ?[Asset];
+		files : [Asset];
 	};
 
 	private var capsules = Map.new<CapsuleId, Capsule>(thash);
@@ -85,10 +89,10 @@ actor {
 				let capsule : Capsule = {
 					id = id;
 					owner = caller;
-					authorized = null;
+					authorized = [];
 					locked_minutes = 0;
 					locked_start = 0;
-					files = null;
+					files = [];
 				};
 
 				ignore Map.put(capsules, thash, id, capsule);
@@ -98,11 +102,52 @@ actor {
 		};
 	};
 
+	public shared ({ caller }) func add_file(capsule_id : CapsuleId, asset_id : Asset_ID) : async Result.Result<Text, Text> {
+		if (Principal.isAnonymous(caller)) {
+			return #err("Anon");
+		};
+
+		switch (await FileStorage.get(asset_id)) {
+			case (#err asset_err) {
+				return #err(asset_err);
+			};
+			case (#ok asset) {
+				if (Principal.equal(Principal.fromText(asset.owner), caller)) {
+					switch (Map.get(capsules, thash, capsule_id)) {
+						case (?capsule) {
+							let file : Asset = {
+								created = asset.created;
+								content_type = asset.content_type;
+								filename = asset.filename;
+								url = asset.url;
+							};
+
+							var files_updated : Buffer.Buffer<Asset> = Buffer.fromArray(capsule.files);
+							files_updated.add(file);
+
+							let capsule_updated : Capsule = {
+								capsule with files = Buffer.toArray(files_updated);
+							};
+
+							ignore Map.put(capsules, thash, capsule_id, capsule_updated);
+
+							return #ok("Added File");
+						};
+						case (_) {
+
+							return #err("Capsule Not Found");
+						};
+					};
+				} else {
+					return #err("Not Owner");
+				};
+			};
+		};
+	};
+
 	// update capsule time
 
 	// update capsule authorized
-
-	// update capsule files
 
 	// ------------------------- VETKD_SYSTEM_API -------------------------
 	type VETKD_SYSTEM_API = actor {
