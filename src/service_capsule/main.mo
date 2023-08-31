@@ -198,7 +198,36 @@ actor {
 		};
 	};
 
-	// update capsule authorized
+	public shared ({ caller }) func add_user(capsule_id : CapsuleId, user : Text) : async Result.Result<Ok, Err> {
+		if (Principal.isAnonymous(caller)) {
+			return #err(#Anon(true));
+		};
+
+		let user_principal : Principal = Principal.fromText(user);
+
+		switch (Map.get(capsules, thash, capsule_id)) {
+			case (?capsule) {
+				if (Principal.equal(capsule.owner, user_principal)) {
+
+					var authorized_updated : Buffer.Buffer<Principal> = Buffer.fromArray(capsule.authorized);
+					authorized_updated.add(user_principal);
+
+					let capsule_updated : Capsule = {
+						capsule with authorized = Buffer.toArray(authorized_updated);
+					};
+
+					ignore Map.put(capsules, thash, capsule_id, capsule_updated);
+
+					return #ok(#AddedTime(true));
+				} else {
+					return #err(#NotOwner(true));
+				};
+			};
+			case (_) {
+				return #err(#CapsuleNotFound(true));
+			};
+		};
+	};
 
 	// ------------------------- VETKD_SYSTEM_API -------------------------
 	type VETKD_SYSTEM_API = actor {
