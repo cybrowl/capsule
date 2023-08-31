@@ -169,7 +169,7 @@ actor {
 			case (?capsule) {
 				if (Principal.equal(capsule.owner, caller)) {
 
-					//TODO: check if it is unlocked, if true reset `locked_start` to 0
+					//TODO: check if it is unlocked, if true reset `locked_start` to 0 & `locked_minutes` to 0
 
 					if (capsule.locked_start == 0) {
 						let capsule_updated : Capsule = {
