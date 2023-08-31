@@ -1,8 +1,8 @@
 import test from 'tape';
 import { config } from 'dotenv';
 import { Ed25519KeyIdentity } from '@dfinity/identity';
-import { capsule_canister_id } from './actor_canister_ids.mjs';
-import { capsule_interface } from './actor_interface.mjs';
+import { capsule_canister_id, file_storage_canister_id } from './actor_canister_ids.mjs';
+import { capsule_interface, file_storage_interface } from './actor_interface.mjs';
 import { getActor } from './actor.mjs';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -24,6 +24,7 @@ let satoshi_identity = parseIdentity(process.env.SATOSHI_IDENTITY);
 let random_identity = Ed25519KeyIdentity.generate();
 
 let capsule_actor = {};
+let file_storage_actor = {};
 
 let capsule_x = '';
 
@@ -35,6 +36,12 @@ test('Setup Actors', async function () {
 	capsule_actor.satoshi = await getActor(capsule_canister_id, capsule_interface, satoshi_identity);
 	capsule_actor.random = await getActor(capsule_canister_id, capsule_interface, random_identity);
 
+	file_storage_actor.random = await getActor(
+		file_storage_canister_id,
+		file_storage_interface,
+		random_identity
+	);
+
 	test('Capsule.version(): get version => #ok - version num', async function (t) {
 		const version_m = await capsule_actor.motoko.version();
 		const version_z = await capsule_actor.zooko.version();
@@ -45,6 +52,12 @@ test('Setup Actors', async function () {
 		t.equal(version_z, 1n);
 		t.equal(version_s, 1n);
 		t.equal(version_r, 1n);
+	});
+
+	test('FileStorage.version(): get version => #ok - version num', async function (t) {
+		const version_r = await file_storage_actor.random.version();
+
+		t.equal(version_r, 4n);
 	});
 
 	test('Capsule[random].check_capsule_exists(): with invalid id => #err - false', async function (t) {
