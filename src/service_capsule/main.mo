@@ -6,6 +6,7 @@ import Map "mo:hash-map";
 import Principal "mo:base/Principal";
 import Result "mo:base/Result";
 import Text "mo:base/Text";
+import Time "mo:base/Time";
 
 import Hex "./utils/Hex";
 
@@ -27,14 +28,29 @@ actor {
 
 	type CapsuleId = Text;
 	type Asset_ID = Text;
+	type Time = Int;
 
 	type Capsule = {
 		id : CapsuleId;
 		owner : Principal; // anon already
-		authorized : [Text]; // anon already
+		authorized : [Principal]; // anon already
 		locked_minutes : Nat;
-		locked_start : Nat;
+		locked_start : Time;
 		files : [Asset];
+	};
+
+	public type Err = {
+		#Anon : Bool;
+		#AssetNotFound : Bool;
+		#NotOwner : Bool;
+		#CapsuleNotFound : Bool;
+		#CapsuleExists : Bool;
+	};
+
+	public type Ok = {
+		#CreatedCapsule : Bool;
+		#AddedFile : Bool;
+		#AddedTime : Bool;
 	};
 
 	private var capsules = Map.new<CapsuleId, Capsule>(thash);
@@ -54,9 +70,9 @@ actor {
 		};
 	};
 
-	public query ({ caller }) func get_capsule(id : CapsuleId) : async Result.Result<Capsule, Text> {
+	public query ({ caller }) func get_capsule(id : CapsuleId) : async Result.Result<Capsule, Err> {
 		if (Principal.isAnonymous(caller)) {
-			return #err("Anon");
+			return #err(#Anon(true));
 		};
 
 		// TODO: if capsule is locked do NOT return capsule info
@@ -66,24 +82,24 @@ actor {
 				if (Principal.equal(caller, capsule.owner)) {
 					return #ok(capsule);
 				} else {
-					return #err("Not Owner");
+					return #err(#NotOwner(true));
 				};
 
 			};
 			case (_) {
-				return #err("Not Found");
+				return #err(#CapsuleNotFound(true));
 			};
 		};
 	};
 
-	public shared ({ caller }) func create_capsule(id : CapsuleId) : async Result.Result<Text, Text> {
+	public shared ({ caller }) func create_capsule(id : CapsuleId) : async Result.Result<Ok, Err> {
 		if (Principal.isAnonymous(caller)) {
-			return #err("Anon");
+			return #err(#Anon(true));
 		};
 
 		switch (Map.get(capsules, thash, id)) {
 			case (?capsule) {
-				return #err("CapsuleExists");
+				return #err(#CapsuleExists(true));
 			};
 			case (_) {
 				let capsule : Capsule = {
@@ -97,19 +113,19 @@ actor {
 
 				ignore Map.put(capsules, thash, id, capsule);
 
-				return #ok("Created Capsule");
+				return #ok(#CreatedCapsule(true));
 			};
 		};
 	};
 
-	public shared ({ caller }) func add_file(capsule_id : CapsuleId, asset_id : Asset_ID) : async Result.Result<Text, Text> {
+	public shared ({ caller }) func add_file(capsule_id : CapsuleId, asset_id : Asset_ID) : async Result.Result<Ok, Err> {
 		if (Principal.isAnonymous(caller)) {
-			return #err("Anon");
+			return #err(#Anon(true));
 		};
 
 		switch (await FileStorage.get(asset_id)) {
 			case (#err asset_err) {
-				return #err(asset_err);
+				return #err(#AssetNotFound(true));
 			};
 			case (#ok asset) {
 				if (Principal.equal(Principal.fromText(asset.owner), caller)) {
@@ -131,21 +147,56 @@ actor {
 
 							ignore Map.put(capsules, thash, capsule_id, capsule_updated);
 
-							return #ok("Added File");
+							return #ok(#AddedFile(true));
 						};
 						case (_) {
-
-							return #err("Capsule Not Found");
+							return #err(#CapsuleNotFound(true));
 						};
 					};
 				} else {
-					return #err("Not Owner");
+					return #err(#NotOwner(true));
 				};
 			};
 		};
 	};
 
-	// update capsule time
+	public shared ({ caller }) func add_time(capsule_id : CapsuleId, minutes : Nat) : async Result.Result<Ok, Err> {
+		if (Principal.isAnonymous(caller)) {
+			return #err(#Anon(true));
+		};
+
+		switch (Map.get(capsules, thash, capsule_id)) {
+			case (?capsule) {
+				if (Principal.equal(capsule.owner, caller)) {
+
+					//TODO: check if it is unlocked, if true reset `locked_start` to 0
+
+					if (capsule.locked_start == 0) {
+						let capsule_updated : Capsule = {
+							capsule with locked_start = Time.now();
+						};
+
+						ignore Map.put(capsules, thash, capsule_id, capsule_updated);
+					};
+
+					let locked_minutes_updated : Nat = capsule.locked_minutes + minutes;
+
+					let capsule_updated : Capsule = {
+						capsule with locked_minutes = locked_minutes_updated;
+					};
+
+					ignore Map.put(capsules, thash, capsule_id, capsule_updated);
+
+					return #ok(#AddedTime(true));
+				} else {
+					return #err(#NotOwner(true));
+				};
+			};
+			case (_) {
+				return #err(#CapsuleNotFound(true));
+			};
+		};
+	};
 
 	// update capsule authorized
 
