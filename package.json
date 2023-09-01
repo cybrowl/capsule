@@ -16,12 +16,11 @@
 		"test": "npm run generate_test_interface && tape tests/capsule.test.mjs"
 	},
 	"dependencies": {
-		"@dfinity/agent": "^0.19.0",
+		"@dfinity/agent": "^0.19.2",
 		"@dfinity/auth-client": "^0.19.2",
-		"@dfinity/candid": "^0.19.0",
-		"@dfinity/identity": "^0.19.0",
-		"@dfinity/principal": "^0.19.0",
-		"crc-32": "^1.2.2",
+		"@dfinity/candid": "^0.19.2",
+		"@dfinity/identity": "^0.19.2",
+		"@dfinity/principal": "^0.19.2",
 		"dotenv": "^16.3.1",
 		"ic-vetkd-utils": "file:./src/vetkd_utils",
 		"lodash": "^4.17.21"
