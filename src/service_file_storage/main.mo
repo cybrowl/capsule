@@ -69,8 +69,6 @@ actor class FileStorage(is_prod : Bool) = this {
 	public shared ({ caller }) func create_chunk(content : Blob, order : Nat) : async Nat {
 		chunk_id_count := chunk_id_count + 1;
 
-		Debug.print(debug_show ("create_chunk", content.size()));
-
 		let asset_chunk : AssetChunk = {
 			content = content;
 			created = Time.now();
@@ -116,10 +114,6 @@ actor class FileStorage(is_prod : Bool) = this {
 					if (chunk.owner != caller) {
 						return #err(#ChunkOwnerInvalid(true));
 					} else {
-						Debug.print(debug_show ("id", chunk.id));
-
-						Debug.print(debug_show (chunk.content.size()));
-
 						asset_content.add(chunk.content);
 						content_size := content_size + chunk.content.size();
 					};

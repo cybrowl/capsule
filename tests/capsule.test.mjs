@@ -194,4 +194,29 @@ test('Setup Actors', async function () {
 		t.equal(capsule.locked_start, 0n, 'Capsule locked_start should be 0n');
 		t.equal(capsule.locked_minutes, 0n, 'Capsule locked_minutes should be 0n');
 	});
+
+	test('Capsule[random].add_time(): with capsule id and minutes => #ok - AddedTime', async function (t) {
+		let minutes = 60;
+
+		const { ok: added_time, err: err_adding } = await capsule_actor.random.add_time(
+			capsule_x,
+			minutes
+		);
+
+		t.deepEqual(added_time, { AddedTime: true }, 'The time should be successfully added');
+
+		t.equal(err_adding, undefined, 'There should be no error while adding the file');
+	});
+
+	test('Capsule[random].get_capsule(): with valid id => #ok - capsule', async function (t) {
+		const { ok: capsule, err: err_creating } = await capsule_actor.random.get_capsule(capsule_x);
+
+		t.ok(capsule.id, 'Capsule should have an ID');
+
+		t.ok(
+			capsule.locked_start.toString().length > 7,
+			'The string representation of capsule.locked_start should have a length greater than 7'
+		);
+		t.equal(capsule.locked_minutes, 60n, 'Capsule locked_minutes should be 60n');
+	});
 });

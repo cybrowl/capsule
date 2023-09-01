@@ -176,22 +176,22 @@ actor {
 				if (Principal.equal(capsule.owner, caller)) {
 
 					//TODO: check if it is unlocked, if true reset `locked_start` to 0 & `locked_minutes` to 0
+					let locked_minutes_updated : Nat = capsule.locked_minutes + minutes;
 
 					if (capsule.locked_start == 0) {
 						let capsule_updated : Capsule = {
-							capsule with locked_start = Time.now();
+							capsule with locked_minutes = locked_minutes_updated;
+							locked_start = Time.now();
 						};
 
-						ignore Map.put(capsules, thash, capsule_id, capsule_updated);
+						Map.set(capsules, thash, capsule_id, capsule_updated);
+					} else {
+						let capsule_updated : Capsule = {
+							capsule with locked_minutes = locked_minutes_updated;
+						};
+
+						Map.set(capsules, thash, capsule_id, capsule_updated);
 					};
-
-					let locked_minutes_updated : Nat = capsule.locked_minutes + minutes;
-
-					let capsule_updated : Capsule = {
-						capsule with locked_minutes = locked_minutes_updated;
-					};
-
-					ignore Map.put(capsules, thash, capsule_id, capsule_updated);
 
 					return #ok(#AddedTime(true));
 				} else {
