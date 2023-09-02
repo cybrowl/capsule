@@ -3,7 +3,7 @@ import Blob "mo:base/Blob";
 import Error "mo:base/Error";
 import Float "mo:base/Float";
 import Iter "mo:base/Iter";
-import Map "mo:hash-map";
+import Map "mo:map/Map";
 import Nat "mo:base/Nat";
 import Nat32 "mo:base/Nat32";
 import Option "mo:base/Option";

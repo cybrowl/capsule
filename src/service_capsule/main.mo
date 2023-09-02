@@ -2,7 +2,7 @@ import Array "mo:base/Array";
 import Blob "mo:base/Blob";
 import Buffer "mo:base/Buffer";
 import Debug "mo:base/Debug";
-import Map "mo:hash-map";
+import Map "mo:map/Map";
 import Principal "mo:base/Principal";
 import Result "mo:base/Result";
 import Text "mo:base/Text";
@@ -68,6 +68,10 @@ actor {
 				return false;
 			};
 		};
+	};
+
+	public query func get_capsules_size() : async Nat {
+		return Map.size(capsules);
 	};
 
 	public query ({ caller }) func get_capsule(id : CapsuleId) : async Result.Result<Capsule, Err> {
