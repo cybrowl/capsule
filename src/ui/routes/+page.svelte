@@ -1,199 +1,21 @@
 <script>
-	import { actor_capsule, actor_file_storage } from '$stores_ref/actors';
-	import { auth_actors, login, crypto_service } from '$stores_ref/auth_client';
-	import { get } from 'lodash';
-	import { AssetManager } from '../libs/file_storage';
+	import { onMount } from 'svelte';
+	import { goto } from '$app/navigation';
+	import { v4 as uuidv4 } from 'uuid';
+	import { page } from '$app/stores';
 
-	let file_input_elem;
+	onMount(() => {
+		let { capsule_id } = $page.params;
 
-	function triggerFileSelectionBrowser(e) {
-		file_input_elem.click();
-	}
+		if (!capsule_id) {
+			capsule_id = uuidv4();
 
-	async function handleAuth() {
-		await auth_actors.capsule();
-
-		try {
-			if ($actor_capsule.loggedIn) {
-				let version = await $actor_capsule.actor.version();
-
-				console.log('version: ', version);
-
-				window.location.reload();
-			}
-		} catch (error) {}
-	}
-
-	function handleLoginClick() {
-		login(true, handleAuth);
-	}
-
-	function handleCreateAccountClick() {
-		// handle add card logic here
-		alert('Add card button clicked!');
-	}
-
-	async function fetchFile(fileUrl) {
-		// NOTE: some cors issue happening locally???
-		return fetch(fileUrl)
-			.then(async (response) => {
-				const file_array_buffer = await response.arrayBuffer();
-
-				return file_array_buffer;
-			})
-			.catch((error) => {
-				console.error('Fetch error: ', error);
-			});
-	}
-
-	function downloadFile(arrayBuffer, filename) {
-		// Create a blob from the ArrayBuffer
-		const blob = new Blob([arrayBuffer]);
-
-		// Create a URL for the blob
-		const url = window.URL.createObjectURL(blob);
-
-		// Create a temporary anchor element
-		const a = document.createElement('a');
-		a.style.display = 'none';
-		a.href = url;
-		a.download = filename;
-
-		// Append anchor to the body, click it, then remove it
-		document.body.appendChild(a);
-		a.click();
-		document.body.removeChild(a);
-
-		// Release the created URL
-		setTimeout(function () {
-			window.URL.revokeObjectURL(url);
-		}, 100);
-	}
-
-	async function decryptInChunks(encryptedBuffer) {
-		const CHUNK_SIZE = 2000000;
-		const ENCRYPTED_CHUNK_SIZE = CHUNK_SIZE + 28;
-
-		const decryptedChunks = [];
-		const numChunks = Math.ceil(encryptedBuffer.byteLength / ENCRYPTED_CHUNK_SIZE);
-
-		for (let i = 0; i < numChunks; i++) {
-			const startByte = i * ENCRYPTED_CHUNK_SIZE;
-			const endByte = Math.min(encryptedBuffer.byteLength, startByte + ENCRYPTED_CHUNK_SIZE);
-			const chunk = encryptedBuffer.slice(startByte, endByte);
-
-			const decryptedChunk = await $crypto_service.decrypt(chunk);
-
-			decryptedChunks.push(decryptedChunk);
+			const capsule_route = '/' + capsule_id;
+			goto(capsule_route);
 		}
-
-		// Combine decrypted chunks into a single buffer
-		let totalSize = decryptedChunks.reduce((acc, chunk) => acc + chunk.byteLength, 0);
-		let combined = new Uint8Array(totalSize);
-		let position = 0;
-		for (let chunk of decryptedChunks) {
-			combined.set(new Uint8Array(chunk), position);
-			position += chunk.byteLength;
-		}
-
-		return combined.buffer;
-	}
-
-	async function handleUploadClick(e) {
-		let file_storage_lib = new AssetManager($actor_file_storage.actor, $crypto_service);
-		await $crypto_service.init_caller();
-
-		fetchFile(
-			'https://pvbg6-liaaa-aaaag-abwha-cai.raw.icp0.io/asset/66e5088c-e6b-fdc-75c-f1da4af0b0c5'
-		)
-			.then(async (encrypted_file_buffer) => {
-				//TODO: decrypt in chunks 2MB?
-
-				const decrypted_data = await decryptInChunks(encrypted_file_buffer);
-
-				downloadFile(decrypted_data, 'testing.mov');
-
-				// console.log('decrypted_data: ', decrypted_data);
-			})
-			.catch((error) => {
-				console.error('Error:', error);
-			});
-
-		const file = e.target.files[0];
-
-		const file_name = get(file, 'name', '');
-		const file_type = get(file, 'type', '');
-		const file_array_buffer = await file.arrayBuffer();
-
-		e.target.value = '';
-
-		if ($actor_capsule.loggedIn) {
-			// Get encrypted key
-			// await $crypto_service.init_pw('ocean');
-
-			let version = await $actor_capsule.actor.version();
-			const all_assets = await file_storage_lib.getAllAssets();
-
-			console.log('version: ', version);
-			console.log('all_assets: ', all_assets);
-
-			await file_storage_lib.store(file_array_buffer, {
-				content_type: file_type,
-				filename: file_name
-			});
-		}
-	}
+	});
 </script>
 
 <svelte:head>
 	<title>Capsule</title>
 </svelte:head>
-
-<main class="grid grid-cols-12 h-screen">
-	<!-- Left column with the image -->
-	<div class="col-span-6 relative">
-		<img src="fish_bg.jpeg" alt="Description" class="absolute inset-0 w-full h-full object-cover" />
-	</div>
-	<div class="col-span-6 grid grid-rows-2">
-		<!-- 6 columns content for the right side -->
-		<div class="row-span-1 bg-gray-800 relative">
-			<button
-				class="absolute top-4 right-4 bg-zinc-900 hover:bg-zinc-700 text-white font-bold py-2 px-4 rounded"
-				on:click={handleCreateAccountClick}
-			>
-				Create Account
-			</button>
-		</div>
-		{#if $actor_capsule.loggedIn === false}
-			<div class="row-span-1 bg-gray-950 flex justify-center items-center">
-				<button
-					class="bg-zinc-300 hover:bg-stone-100 text-violet-500 font-bold py-2 px-4 rounded"
-					on:click={handleLoginClick}
-				>
-					Login
-				</button>
-			</div>
-		{/if}
-
-		{#if $actor_capsule.loggedIn}
-			<div class="row-span-1 bg-gray-950 relative">
-				<button
-					class="absolute top-4 right-4 bg-zinc-900 hover:bg-zinc-700 text-white font-bold py-2 px-4 rounded"
-					on:click={triggerFileSelectionBrowser}
-				>
-					Upload
-				</button>
-			</div>
-		{/if}
-	</div>
-
-	<input
-		class="invisible w-0 h-0 absolute"
-		type="file"
-		on:change={(e) => handleUploadClick(e)}
-		bind:this={file_input_elem}
-	/>
-</main>
-
-<style lang="postcss">
-</style>
