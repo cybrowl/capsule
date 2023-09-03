@@ -2,16 +2,43 @@
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
 	import { actor_capsule, actor_file_storage } from '$stores_ref/actors';
-	import { auth_actors, login, crypto_service } from '$stores_ref/auth_client';
+	import { auth_actors, login, crypto_service, init_auth } from '$stores_ref/auth_client';
 	import { get } from 'lodash';
 	import { AssetManager } from '../../libs/file_storage';
+	import { CryptoService } from '../../libs/crypto';
+	import init_vetkd_wasm from 'ic-vetkd-utils';
 
 	let file_input_elem;
 
 	let capsule_id = '';
+	let files = [];
 
-	onMount(() => {
+	onMount(async () => {
+		await init_auth();
+
+		await auth_actors.capsule();
+		await auth_actors.file_storage();
+
+		await init_vetkd_wasm();
+
+		const cryptoService = new CryptoService($actor_capsule.actor);
+		crypto_service.set(cryptoService);
+
+		await cryptoService.init_caller();
+
 		capsule_id = $page.params.capsule_id;
+
+		if ($actor_capsule.loggedIn === true) {
+			let exists = await $actor_capsule.actor.check_capsule_exists(capsule_id);
+
+			if (exists === false) {
+				let { ok: created, err: error } = await $actor_capsule.actor.create_capsule(capsule_id);
+			}
+
+			let { ok: capsule } = await $actor_capsule.actor.get_capsule(capsule_id);
+
+			files = capsule.files;
+		}
 	});
 
 	function triggerFileSelectionBrowser(e) {
@@ -107,15 +134,11 @@
 		return combined.buffer;
 	}
 
-	function decryptFile() {
-		fetchFile(
-			'https://pvbg6-liaaa-aaaag-abwha-cai.raw.icp0.io/asset/66e5088c-e6b-fdc-75c-f1da4af0b0c5'
-		)
+	function decryptFile(url, filename) {
+		fetchFile(url)
 			.then(async (encrypted_file_buffer) => {
-				//TODO: decrypt in chunks 2MB?
 				const decrypted_data = await decryptInChunks(encrypted_file_buffer);
-				downloadFile(decrypted_data, 'testing.mov');
-				// console.log('decrypted_data: ', decrypted_data);
+				downloadFile(decrypted_data, filename);
 			})
 			.catch((error) => {
 				console.error('Error:', error);
@@ -124,7 +147,6 @@
 
 	async function handleUploadClick(e) {
 		let file_storage_lib = new AssetManager($actor_file_storage.actor, $crypto_service);
-		await $crypto_service.init_caller();
 
 		// Get encrypted key
 		// await $crypto_service.init_pw('ocean');
@@ -142,8 +164,13 @@
 				filename: file_name
 			});
 
-			await $actor_capsule.actor.add_file(capsule_id, asset_id);
+			const { ok: added_file, err: err_adding_file } = await $actor_capsule.actor.add_file(
+				capsule_id,
+				asset_id
+			);
 
+			console.log('added_file: ', added_file);
+			console.log('err_adding_file: ', err_adding_file);
 			console.log('error_store: ', error_store);
 		}
 	}
@@ -181,12 +208,41 @@
 
 		{#if $actor_capsule.loggedIn}
 			<div class="row-span-1 bg-gray-950 relative">
-				<button
-					class="absolute top-4 right-4 bg-zinc-900 hover:bg-zinc-700 text-white font-bold py-2 px-4 rounded"
-					on:click={triggerFileSelectionBrowser}
-				>
-					Upload
-				</button>
+				<div class="actions p-4">
+					<button
+						class="bg-zinc-900 hover:bg-zinc-700 text-white font-bold py-2 px-4 rounded"
+						on:click={triggerFileSelectionBrowser}
+					>
+						Upload
+					</button>
+				</div>
+
+				<table class="min-w-full text-white">
+					<thead>
+						<tr>
+							<th class="py-2 px-4 border-b text-left">Filename</th>
+							<th class="py-2 px-4 border-b text-left">Created</th>
+							<th class="py-2 px-4 border-b text-left">Content Type</th>
+						</tr>
+					</thead>
+					<tbody>
+						{#each files as { filename, created, content_type, url }}
+							<tr>
+								<td class="py-2 px-4 border-b">{filename}</td>
+								<td class="py-2 px-4 border-b">{created}</td>
+								<td class="py-2 px-4 border-b">{content_type}</td>
+								<td class="py-2 px-4 border-b">
+									<button
+										class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+										on:click={() => decryptFile(url, filename)}
+									>
+										Download
+									</button>
+								</td>
+							</tr>
+						{/each}
+					</tbody>
+				</table>
 			</div>
 		{/if}
 	</div>

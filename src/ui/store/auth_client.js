@@ -22,7 +22,7 @@ const authenticate_actor = async (actor_name, actor) => {
 	}
 };
 
-async function init_auth() {
+export async function init_auth() {
 	auth_client = await AuthClient.create({
 		idleOptions: {
 			idleTimeout: 1000 * 60 * 60 * 24 * 30,
@@ -39,8 +39,6 @@ async function init_auth() {
 		auth_actors[name] = () => authenticate_actor(name, actor);
 	});
 }
-
-init_auth();
 
 // login
 export async function login(isProd, handleAuth) {
