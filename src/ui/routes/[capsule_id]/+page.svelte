@@ -7,13 +7,17 @@
 	import { AssetManager } from '../../libs/file_storage';
 	import { CryptoService } from '../../libs/crypto';
 	import init_vetkd_wasm from 'ic-vetkd-utils';
+	import JellyFish from '../loading/JellyFish.svelte';
 
 	let file_input_elem;
 
 	let capsule_id = '';
 	let files = [];
+	let is_loading = false;
 
 	onMount(async () => {
+		is_loading = true;
+
 		await init_auth();
 
 		await auth_actors.capsule();
@@ -38,6 +42,8 @@
 			let { ok: capsule } = await $actor_capsule.actor.get_capsule(capsule_id);
 
 			files = capsule.files;
+
+			is_loading = false;
 		}
 	});
 
@@ -182,12 +188,12 @@
 
 <main class="grid grid-cols-12 h-screen">
 	<!-- Left column with the image -->
-	<div class="col-span-6 relative">
-		<img src="fish_bg.jpeg" alt="Description" class="absolute inset-0 w-full h-full object-cover" />
+	<div class="col-span-4 relative">
+		<img src="header.jpg" alt="Description" class="absolute inset-0 w-full h-full object-cover" />
 	</div>
-	<div class="col-span-6 grid grid-rows-2">
+	<div class="col-span-8 grid grid-rows-5">
 		<!-- 6 columns content for the right side -->
-		<div class="row-span-1 bg-gray-800 relative">
+		<div class="row-span-2 bg-gray-800 relative">
 			<button
 				class="absolute top-4 right-4 bg-zinc-900 hover:bg-zinc-700 text-white font-bold py-2 px-4 rounded"
 				on:click={handleCreateAccountClick}
@@ -206,8 +212,14 @@
 			</div>
 		{/if}
 
-		{#if $actor_capsule.loggedIn}
-			<div class="row-span-1 bg-gray-950 relative">
+		{#if is_loading === true && $actor_capsule.loggedIn}
+			<div class="row-span-3 bg-gray-950 flex justify-center items-center">
+				<JellyFish />
+			</div>
+		{/if}
+
+		{#if is_loading === false && $actor_capsule.loggedIn}
+			<div class="row-span-3 bg-gray-950 relative">
 				<div class="actions p-4">
 					<button
 						class="bg-zinc-900 hover:bg-zinc-700 text-white font-bold py-2 px-4 rounded"
@@ -220,20 +232,20 @@
 				<table class="min-w-full text-white">
 					<thead>
 						<tr>
-							<th class="py-2 px-4 border-b text-left">Filename</th>
-							<th class="py-2 px-4 border-b text-left">Created</th>
-							<th class="py-2 px-4 border-b text-left">Content Type</th>
+							<th class="py-2 px-4 border-b border-zinc-900 text-left">Filename</th>
+							<th class="py-2 px-4 border-b border-zinc-900 text-left">Created</th>
+							<th class="py-2 px-4 border-b border-zinc-900 text-left">Content Type</th>
 						</tr>
 					</thead>
 					<tbody>
 						{#each files as { filename, created, content_type, url }}
 							<tr>
-								<td class="py-2 px-4 border-b">{filename}</td>
-								<td class="py-2 px-4 border-b">{created}</td>
-								<td class="py-2 px-4 border-b">{content_type}</td>
-								<td class="py-2 px-4 border-b">
+								<td class="py-2 px-4 border-b border-zinc-900">{filename}</td>
+								<td class="py-2 px-4 border-b border-zinc-900">{created}</td>
+								<td class="py-2 px-4 border-b border-zinc-900">{content_type}</td>
+								<td class="py-2 px-4 border-b border-zinc-900">
 									<button
-										class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+										class="bg-zinc-900 hover:bg-zinc-700 text-white font-bold py-2 px-4 rounded"
 										on:click={() => decryptFile(url, filename)}
 									>
 										Download
