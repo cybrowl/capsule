@@ -14,9 +14,11 @@
 	let capsule_id = '';
 	let files = [];
 	let is_loading = false;
+	let is_loading_msg = '';
 
 	onMount(async () => {
 		is_loading = true;
+		is_loading_msg = 'Setting Up Encryption';
 
 		await init_auth();
 
@@ -29,6 +31,9 @@
 		crypto_service.set(cryptoService);
 
 		await cryptoService.init_caller();
+
+		// NOTE: Another way of doing encryption based on password
+		// await $crypto_service.init_pw('ocean');
 
 		capsule_id = $page.params.capsule_id;
 
@@ -44,6 +49,7 @@
 			files = capsule.files;
 
 			is_loading = false;
+			is_loading_msg = '';
 		}
 	});
 
@@ -140,13 +146,22 @@
 		return combined.buffer;
 	}
 
-	function decryptFile(url, filename) {
+	function decryptAndDownloadFile(url, filename) {
+		is_loading = true;
+		is_loading_msg = 'Decrypting File and Saving...';
+
 		fetchFile(url)
 			.then(async (encrypted_file_buffer) => {
 				const decrypted_data = await decryptInChunks(encrypted_file_buffer);
 				downloadFile(decrypted_data, filename);
+
+				is_loading = false;
+				is_loading_msg = '';
 			})
 			.catch((error) => {
+				is_loading = false;
+				is_loading_msg = '';
+
 				console.error('Error:', error);
 			});
 	}
@@ -154,8 +169,8 @@
 	async function handleUploadClick(e) {
 		let file_storage_lib = new AssetManager($actor_file_storage.actor, $crypto_service);
 
-		// Get encrypted key
-		// await $crypto_service.init_pw('ocean');
+		is_loading = true;
+		is_loading_msg = 'Encrypting File and Storing...';
 
 		const file = e.target.files[0];
 		const file_name = get(file, 'name', '');
@@ -175,9 +190,11 @@
 				asset_id
 			);
 
-			console.log('added_file: ', added_file);
-			console.log('err_adding_file: ', err_adding_file);
-			console.log('error_store: ', error_store);
+			let { ok: capsule } = await $actor_capsule.actor.get_capsule(capsule_id);
+
+			files = capsule.files;
+			is_loading = false;
+			is_loading_msg = '';
 		}
 	}
 </script>
@@ -202,7 +219,7 @@
 			</button>
 		</div>
 		{#if $actor_capsule.loggedIn === false}
-			<div class="row-span-1 bg-gray-950 flex justify-center items-center">
+			<div class="row-span-3 bg-gray-950 flex justify-center items-center">
 				<button
 					class="bg-zinc-300 hover:bg-stone-100 text-violet-500 font-bold py-2 px-4 rounded"
 					on:click={handleLoginClick}
@@ -213,48 +230,51 @@
 		{/if}
 
 		{#if is_loading === true && $actor_capsule.loggedIn}
-			<div class="row-span-3 bg-gray-950 flex justify-center items-center">
+			<div class="row-span-3 bg-gray-950 flex justify-center items-center flex-col">
 				<JellyFish />
+				<p class="text-white mt-4">{is_loading_msg}</p>
 			</div>
 		{/if}
 
 		{#if is_loading === false && $actor_capsule.loggedIn}
 			<div class="row-span-3 bg-gray-950 relative">
-				<div class="actions p-4">
-					<button
-						class="bg-zinc-900 hover:bg-zinc-700 text-white font-bold py-2 px-4 rounded"
-						on:click={triggerFileSelectionBrowser}
-					>
-						Upload
-					</button>
-				</div>
+				<div class="overflow-auto max-h-[60vh]">
+					<div class="actions p-4">
+						<button
+							class="bg-zinc-900 hover:bg-zinc-700 text-white font-bold py-2 px-4 rounded"
+							on:click={triggerFileSelectionBrowser}
+						>
+							Upload
+						</button>
+					</div>
 
-				<table class="min-w-full text-white">
-					<thead>
-						<tr>
-							<th class="py-2 px-4 border-b border-zinc-900 text-left">Filename</th>
-							<th class="py-2 px-4 border-b border-zinc-900 text-left">Created</th>
-							<th class="py-2 px-4 border-b border-zinc-900 text-left">Content Type</th>
-						</tr>
-					</thead>
-					<tbody>
-						{#each files as { filename, created, content_type, url }}
+					<table class="min-w-full text-white">
+						<thead>
 							<tr>
-								<td class="py-2 px-4 border-b border-zinc-900">{filename}</td>
-								<td class="py-2 px-4 border-b border-zinc-900">{created}</td>
-								<td class="py-2 px-4 border-b border-zinc-900">{content_type}</td>
-								<td class="py-2 px-4 border-b border-zinc-900">
-									<button
-										class="bg-zinc-900 hover:bg-zinc-700 text-white font-bold py-2 px-4 rounded"
-										on:click={() => decryptFile(url, filename)}
-									>
-										Download
-									</button>
-								</td>
+								<th class="py-2 px-4 border-b border-zinc-900 text-left">Filename</th>
+								<th class="py-2 px-4 border-b border-zinc-900 text-left">Created</th>
+								<th class="py-2 px-4 border-b border-zinc-900 text-left">Content Type</th>
 							</tr>
-						{/each}
-					</tbody>
-				</table>
+						</thead>
+						<tbody>
+							{#each files as { filename, created, content_type, url }}
+								<tr>
+									<td class="py-2 px-4 border-b border-zinc-900">{filename}</td>
+									<td class="py-2 px-4 border-b border-zinc-900">{created}</td>
+									<td class="py-2 px-4 border-b border-zinc-900">{content_type}</td>
+									<td class="py-2 px-4 border-b border-zinc-900">
+										<button
+											class="bg-zinc-900 hover:bg-zinc-700 text-white font-bold py-2 px-4 rounded"
+											on:click={() => decryptAndDownloadFile(url, filename)}
+										>
+											Download
+										</button>
+									</td>
+								</tr>
+							{/each}
+						</tbody>
+					</table>
+				</div>
 			</div>
 		{/if}
 	</div>
