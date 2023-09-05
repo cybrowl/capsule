@@ -131,8 +131,13 @@ test('Setup Actors', async function () {
 		let capsule_id = uuidv4();
 		capsule_x = capsule_id;
 
+		let kind = {
+			Terminated: null
+		};
+
 		const { ok: created, err: err_creating } = await capsule_actor.random.create_capsule(
-			capsule_id
+			capsule_id,
+			kind
 		);
 
 		t.deepEqual(created, { CreatedCapsule: true });
@@ -140,7 +145,14 @@ test('Setup Actors', async function () {
 	});
 
 	test('Capsule[random].create_capsule(): with taken id => #ok - CapsuleExists', async function (t) {
-		const { ok: created, err: err_creating } = await capsule_actor.random.create_capsule(capsule_x);
+		let kind = {
+			Terminated: null
+		};
+
+		const { ok: created, err: err_creating } = await capsule_actor.random.create_capsule(
+			capsule_x,
+			kind
+		);
 
 		t.deepEqual(err_creating, { CapsuleExists: true });
 		t.equal(created, undefined);
@@ -153,7 +165,7 @@ test('Setup Actors', async function () {
 	});
 
 	test('Capsule[random].get_capsule(): with valid id => #ok - capsule', async function (t) {
-		const { ok: capsule, err: err_creating } = await capsule_actor.random.get_capsule(capsule_x);
+		const { ok: capsule, err: err_capsule } = await capsule_actor.random.get_capsule(capsule_x);
 
 		t.ok(capsule.id, 'Capsule should have an ID');
 
@@ -164,7 +176,7 @@ test('Setup Actors', async function () {
 		t.equal(capsule.locked_start, 0n, 'Capsule locked_start should be 0n');
 		t.equal(capsule.locked_minutes, 0n, 'Capsule locked_minutes should be 0n');
 
-		t.equal(err_creating, undefined, 'There should be no error while fetching the capsule');
+		t.equal(err_capsule, undefined, 'There should be no error while fetching the capsule');
 	});
 
 	test('Capsule[random].add_file(): with valid asset and capsule => #ok - AddedFile', async function (t) {

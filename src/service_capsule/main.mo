@@ -19,6 +19,12 @@ actor {
 		#NotAuthorized : Bool;
 	};
 
+	public type Kind = {
+		#Capsule;
+		#Terminated;
+		#TimeEncrypt;
+	};
+
 	public type Asset = {
 		created : Int;
 		content_type : Text;
@@ -32,11 +38,18 @@ actor {
 
 	type Capsule = {
 		id : CapsuleId;
-		owner : Principal; // anon already
+		kind : Kind;
+		files : [Asset];
 		authorized : [Principal]; // anon already
+		owner : Principal; // anon already
+
+		owner_is_terminated : Bool;
+		countdown_minutes : Nat;
+		last_login : Time;
+
 		locked_minutes : Nat;
 		locked_start : Time;
-		files : [Asset];
+
 	};
 
 	public type Err = {
@@ -55,6 +68,31 @@ actor {
 
 	private var capsules = Map.new<CapsuleId, Capsule>(thash);
 	private var capsule_owner = Map.new<Principal, CapsuleId>(phash);
+
+	private func time_since_last_login(last_login : Time) : Int {
+		let now = Time.now();
+		let difference = now - last_login;
+
+		let differenceInMinutes = difference / (1000 * 60);
+
+		return differenceInMinutes;
+	};
+
+	private func has_countdown_elapsed(last_login : Time, countdown : Nat) : Bool {
+		let timeElapsed = time_since_last_login(last_login);
+
+		return timeElapsed > countdown;
+	};
+
+	private func check_owner_terminated(last_login : Time, countdown : Nat) : Bool {
+		let hasElapsed = has_countdown_elapsed(last_login, countdown);
+
+		if (hasElapsed) {
+			return true;
+		};
+
+		return false;
+	};
 
 	public query func version() : async Nat {
 		return 1;
@@ -75,23 +113,32 @@ actor {
 		return Map.size(capsules);
 	};
 
-	public query ({ caller }) func get_capsule(id : CapsuleId) : async Result.Result<Capsule, Err> {
-		if (Principal.isAnonymous(caller)) {
-			return #err(#Anon(true));
-		};
+	public shared ({ caller }) func get_capsule(id : CapsuleId) : async Result.Result<Capsule, Err> {
 
 		// TODO: if capsule is locked do NOT return capsule info
 
 		switch (Map.get(capsules, thash, id)) {
 			case (?capsule) {
-				if (Principal.equal(caller, capsule.owner)) {
-					let anonymousPrincipal : Blob = "\04";
 
-					let capsule_updated : Capsule = {
-						capsule with owner = Principal.fromBlob(anonymousPrincipal)
+				// (Terminated) execute only if owner terminated
+				if (capsule.kind == #Terminated and check_owner_terminated(capsule.last_login, capsule.countdown_minutes) == true) {
+					switch (Map.get(capsules, thash, id)) {
+						case (?capsule) {
+							return #ok(capsule);
+						};
+						case (_) {};
+					};
+				};
+
+				if (Principal.equal(caller, capsule.owner)) {
+					// update last login
+					let capsule_update_last_login : Capsule = {
+						capsule with last_login = Time.now();
 					};
 
-					return #ok(capsule_updated);
+					ignore Map.put(capsules, thash, capsule.id, capsule_update_last_login);
+
+					return #ok(capsule);
 				} else {
 					return #err(#NotOwner(true));
 				};
@@ -103,7 +150,7 @@ actor {
 		};
 	};
 
-	public shared ({ caller }) func create_capsule(id : CapsuleId) : async Result.Result<Ok, Err> {
+	public shared ({ caller }) func create_capsule(id : CapsuleId, kind : Kind) : async Result.Result<Ok, Err> {
 		if (Principal.isAnonymous(caller)) {
 			return #err(#Anon(true));
 		};
@@ -115,11 +162,15 @@ actor {
 			case (_) {
 				let capsule : Capsule = {
 					id = id;
-					owner = caller;
+					kind = kind;
+					files = [];
 					authorized = [];
+					owner = caller;
+					owner_is_terminated = false;
+					countdown_minutes = 4320;
+					last_login = Time.now();
 					locked_minutes = 0;
 					locked_start = 0;
-					files = [];
 				};
 
 				ignore Map.put(capsules, thash, id, capsule);
@@ -210,6 +261,30 @@ actor {
 		};
 	};
 
+	public shared ({ caller }) func update_countdown(id : CapsuleId, minutes : Nat) : async Result.Result<Capsule, Err> {
+		switch (Map.get(capsules, thash, id)) {
+			case (?capsule) {
+
+				if (Principal.equal(caller, capsule.owner)) {
+					// update countdown minutes
+					let capsule_updated : Capsule = {
+						capsule with countdown_minutes = minutes;
+					};
+
+					ignore Map.put(capsules, thash, capsule.id, capsule_updated);
+
+					return #ok(capsule);
+				} else {
+					return #err(#NotOwner(true));
+				};
+
+			};
+			case (_) {
+				return #err(#CapsuleNotFound(true));
+			};
+		};
+	};
+
 	public shared ({ caller }) func add_user(capsule_id : CapsuleId, user : Text) : async Result.Result<Ok, Err> {
 		if (Principal.isAnonymous(caller)) {
 			return #err(#Anon(true));
@@ -272,15 +347,23 @@ actor {
 		Hex.encode(Blob.toArray(public_key));
 	};
 
-	public shared ({ caller }) func encrypted_symmetric_key_for_caller(encryption_public_key : Blob) : async Result.Result<Text, ErrVetKD> {
-		if (Principal.isAnonymous(caller)) {
-			return #err(#NotAuthorized(true));
+	public shared ({ caller }) func encrypted_symmetric_key_for_caller(encryption_public_key : Blob, id : CapsuleId) : async Result.Result<Text, ErrVetKD> {
+		var principal_id : Principal = caller;
+
+		// (Terminated) execute only if owner terminated
+		switch (Map.get(capsules, thash, id)) {
+			case (?capsule) {
+				if (capsule.kind == #Terminated and check_owner_terminated(capsule.last_login, capsule.countdown_minutes) == true) {
+					principal_id := capsule.owner;
+				};
+			};
+			case (_) {};
 		};
 
 		// TODO: if capsule is locked do NOT return key
 
 		let { encrypted_key } = await vetkd_system_api.vetkd_encrypted_key({
-			derivation_id = Principal.toBlob(caller);
+			derivation_id = Principal.toBlob(principal_id);
 			public_key_derivation_path = Array.make(Text.encodeUtf8("symmetric_key"));
 			key_id = { curve = #bls12_381; name = "test_key_1" };
 			encryption_public_key;
@@ -289,18 +372,18 @@ actor {
 		return #ok(Hex.encode(Blob.toArray(encrypted_key)));
 	};
 
-	public shared func encrypted_symmetric_key_by_pass(password : Text, encryption_public_key : Blob) : async Text {
-		let pass : Blob = Text.encodeUtf8(password);
+	// public shared func encrypted_symmetric_key_by_pass(password : Text, encryption_public_key : Blob) : async Text {
+	//     let pass : Blob = Text.encodeUtf8(password);
 
-		let { encrypted_key } = await vetkd_system_api.vetkd_encrypted_key({
-			derivation_id = pass;
-			public_key_derivation_path = Array.make(Text.encodeUtf8("symmetric_key"));
-			key_id = { curve = #bls12_381; name = "test_key_1" };
-			encryption_public_key;
-		});
+	//     let { encrypted_key } = await vetkd_system_api.vetkd_encrypted_key({
+	//         derivation_id = pass;
+	//         public_key_derivation_path = Array.make(Text.encodeUtf8("symmetric_key"));
+	//         key_id = { curve = #bls12_381; name = "test_key_1" };
+	//         encryption_public_key;
+	//     });
 
-		Hex.encode(Blob.toArray(encrypted_key));
-	};
+	//     Hex.encode(Blob.toArray(encrypted_key));
+	// };
 
 	// public shared func app_vetkd_public_key(derivation_path : [Blob]) : async Text {
 	//     let { public_key } = await vetkd_system_api.vetkd_public_key({
