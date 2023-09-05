@@ -148,7 +148,7 @@ actor {
 						capsule with last_login = Time.now();
 					};
 
-					ignore Map.put(capsules, thash, capsule.id, capsule_update_last_login);
+					Map.set(capsules, thash, capsule.id, capsule_update_last_login);
 
 					return #ok(capsule);
 				} else {

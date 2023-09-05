@@ -31,6 +31,7 @@ let file_storage_actor = {};
 let capsule_x = '';
 let asset_id_x = '';
 let chunk_ids = [];
+let last_login = 0;
 
 test('Setup Actors', async function () {
 	console.log('=========== Capsule ===========');
@@ -226,6 +227,8 @@ test('Setup Actors', async function () {
 	test('Capsule[random].get_capsule(): with valid id => #ok - capsule', async function (t) {
 		const { ok: capsule, err: err_capsule } = await capsule_actor.random.get_capsule(capsule_x);
 
+		last_login = capsule.last_login;
+
 		t.equal(err_capsule, undefined, 'There should be no error while getting the capsule');
 
 		t.ok(capsule.id, 'Capsule should have an ID');
@@ -254,6 +257,8 @@ test('Setup Actors', async function () {
 	test('Capsule[random].get_capsule(): with valid id => #ok - capsule', async function (t) {
 		const { ok: capsule, err: err_capsule } = await capsule_actor.random.get_capsule(capsule_x);
 
+		t.notEqual(capsule.last_login, last_login);
+
 		t.equal(err_capsule, undefined, 'There should be no error while getting the capsule');
 
 		t.ok(capsule.id, 'Capsule should have an ID');
@@ -275,7 +280,6 @@ test('Setup Actors', async function () {
 
 	test('Waiting 2 minutes for is_terminated to be true ', async function (t) {
 		await sleep(120000);
-		console.log('ended');
 	});
 
 	test('Capsule[satoshi].get_capsule(): with invalid principal => #err - NotOwner', async function (t) {
