@@ -49,7 +49,6 @@ actor {
 
 		locked_minutes : Nat;
 		locked_start : Time;
-
 	};
 
 	public type Err = {
@@ -273,7 +272,7 @@ actor {
 
 					ignore Map.put(capsules, thash, capsule.id, capsule_updated);
 
-					return #ok(capsule);
+					return #ok(capsule_updated);
 				} else {
 					return #err(#NotOwner(true));
 				};

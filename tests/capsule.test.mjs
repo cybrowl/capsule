@@ -231,4 +231,30 @@ test('Setup Actors', async function () {
 		);
 		t.equal(capsule.locked_minutes, 60n, 'Capsule locked_minutes should be 60n');
 	});
+
+	test('Capsule[random].update_countdown(): with 1 min => #ok - capsule', async function (t) {
+		let minutes = 1;
+
+		const { ok: capsule_updated, err: err_capsule_updated } =
+			await capsule_actor.random.update_countdown(capsule_x, minutes);
+
+		t.ok(
+			capsule_updated.countdown_minutes.toString().length === 1,
+			'The string representation of capsule_updated.countdown_minutes should equal 1'
+		);
+
+		t.equal(err_capsule_updated, undefined, 'There should be no error while adding the file');
+	});
+
+	test('Capsule[random].get_capsule(): with valid id => #ok - capsule', async function (t) {
+		const { ok: capsule, err: err_creating } = await capsule_actor.random.get_capsule(capsule_x);
+
+		t.ok(capsule.id, 'Capsule should have an ID');
+
+		t.ok(
+			capsule.countdown_minutes.toString().length === 1,
+			'The string representation of capsule.countdown_minutes should equal 1'
+		);
+		t.equal(capsule.locked_minutes, 60n, 'Capsule locked_minutes should be 60n');
+	});
 });
