@@ -209,17 +209,8 @@
 		<img src="header.jpg" alt="Description" class="absolute inset-0 w-full h-full object-cover" />
 	</div>
 	<div class="col-span-8 grid grid-rows-5">
-		<!-- 6 columns content for the right side -->
-		<div class="row-span-2 bg-gray-800 relative">
-			<button
-				class="absolute top-4 right-4 bg-zinc-900 hover:bg-zinc-700 text-white font-bold py-2 px-4 rounded"
-				on:click={handleCreateAccountClick}
-			>
-				Create Account
-			</button>
-		</div>
 		{#if $actor_capsule.loggedIn === false}
-			<div class="row-span-3 bg-gray-950 flex justify-center items-center">
+			<div class="row-span-5 bg-gray-950 flex justify-center items-center">
 				<button
 					class="bg-zinc-300 hover:bg-stone-100 text-violet-500 font-bold py-2 px-4 rounded"
 					on:click={handleLoginClick}
@@ -230,15 +221,15 @@
 		{/if}
 
 		{#if is_loading === true && $actor_capsule.loggedIn}
-			<div class="row-span-3 bg-gray-950 flex justify-center items-center flex-col">
+			<div class="row-span-5 bg-gray-950 flex justify-center items-center flex-col">
 				<JellyFish />
 				<p class="text-white mt-4">{is_loading_msg}</p>
 			</div>
 		{/if}
 
 		{#if is_loading === false && $actor_capsule.loggedIn}
-			<div class="row-span-3 bg-gray-950 relative">
-				<div class="overflow-auto max-h-[60vh]">
+			<div class="row-span-5 bg-gray-950 relative">
+				<div class="overflow-auto max-h-[100vh]">
 					<div class="actions p-4">
 						<button
 							class="bg-zinc-900 hover:bg-zinc-700 text-white font-bold py-2 px-4 rounded"
