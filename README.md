@@ -2,7 +2,10 @@
 
 Description:
 
-A locked will for crypto coins and files / dead man switch
+A capsule/storage to share files with others.
+A time capsule for files and cherished memories to unlock at a future date.
+A fail-safe switch for moments of fear.
+A time-based encryption for revealing things to the world at random.
 
 ## Dev
 
