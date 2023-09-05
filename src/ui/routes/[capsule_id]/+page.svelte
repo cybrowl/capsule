@@ -1,5 +1,6 @@
 <script>
 	import { onMount } from 'svelte';
+	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { actor_capsule, actor_file_storage } from '$stores_ref/actors';
 	import { auth_actors, login, crypto_service, init_auth } from '$stores_ref/auth_client';
@@ -64,13 +65,11 @@
 
 		try {
 			if ($actor_capsule.loggedIn) {
-				let version = await $actor_capsule.actor.version();
-
-				console.log('version: ', version);
-
 				window.location.reload();
 			}
-		} catch (error) {}
+		} catch (error) {
+			console.log('handleAuth - error: ', error);
+		}
 	}
 
 	function handleLoginClick() {
@@ -208,7 +207,7 @@
 <main class="grid grid-cols-12 h-screen">
 	<!-- Left column with the image -->
 	<div class="col-span-4 relative">
-		<img src="header.jpg" alt="Description" class="absolute inset-0 w-full h-full object-cover" />
+		<img src="header.jpeg" alt="Description" class="absolute inset-0 w-full h-full object-cover" />
 	</div>
 	<div class="col-span-8 grid grid-rows-5">
 		{#if $actor_capsule.loggedIn === false}
