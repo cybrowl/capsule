@@ -72,7 +72,7 @@ actor {
 		let now = Time.now();
 		let difference = now - last_login;
 
-		let differenceInMinutes = difference / (1000 * 60);
+		let differenceInMinutes = difference / (1000_000_000 * 60);
 
 		return differenceInMinutes;
 	};
@@ -118,12 +118,25 @@ actor {
 
 		switch (Map.get(capsules, thash, id)) {
 			case (?capsule) {
+				Debug.print(debug_show ("capsule.last_login: ", capsule.last_login));
+				Debug.print(debug_show ("capsule.countdown_minutes: ", capsule.countdown_minutes));
+
+				let is_terminated : Bool = check_owner_terminated(capsule.last_login, capsule.countdown_minutes);
+
+				Debug.print(debug_show ("is_terminated: ", is_terminated));
 
 				// (Terminated) execute only if owner terminated
-				if (capsule.kind == #Terminated and check_owner_terminated(capsule.last_login, capsule.countdown_minutes) == true) {
+				if (capsule.kind == #Terminated and is_terminated == true) {
 					switch (Map.get(capsules, thash, id)) {
 						case (?capsule) {
-							return #ok(capsule);
+
+							let capsule_update_terminated : Capsule = {
+								capsule with owner_is_terminated = true;
+							};
+
+							Map.set(capsules, thash, capsule.id, capsule_update_terminated);
+
+							return #ok(capsule_update_terminated);
 						};
 						case (_) {};
 					};
@@ -352,7 +365,9 @@ actor {
 		// (Terminated) execute only if owner terminated
 		switch (Map.get(capsules, thash, id)) {
 			case (?capsule) {
-				if (capsule.kind == #Terminated and check_owner_terminated(capsule.last_login, capsule.countdown_minutes) == true) {
+				let is_terminated : Bool = check_owner_terminated(capsule.last_login, capsule.countdown_minutes);
+
+				if (capsule.kind == #Terminated and is_terminated == true) {
 					principal_id := capsule.owner;
 				};
 			};

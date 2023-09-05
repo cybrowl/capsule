@@ -6,6 +6,7 @@ import { capsule_interface, file_storage_interface } from './actor_interface.mjs
 import { getActor } from './actor.mjs';
 import { v4 as uuidv4 } from 'uuid';
 import fs from 'node:fs';
+import sleep from 'sleep-promise';
 
 config();
 
@@ -191,7 +192,9 @@ test('Setup Actors', async function () {
 	});
 
 	test('Capsule[random].get_capsule(): with valid id => #ok - capsule', async function (t) {
-		const { ok: capsule, err: err_creating } = await capsule_actor.random.get_capsule(capsule_x);
+		const { ok: capsule, err: err_capsule } = await capsule_actor.random.get_capsule(capsule_x);
+
+		t.equal(err_capsule, undefined, 'There should be no error while getting the capsule');
 
 		t.ok(capsule.id, 'Capsule should have an ID');
 
@@ -221,7 +224,9 @@ test('Setup Actors', async function () {
 	});
 
 	test('Capsule[random].get_capsule(): with valid id => #ok - capsule', async function (t) {
-		const { ok: capsule, err: err_creating } = await capsule_actor.random.get_capsule(capsule_x);
+		const { ok: capsule, err: err_capsule } = await capsule_actor.random.get_capsule(capsule_x);
+
+		t.equal(err_capsule, undefined, 'There should be no error while getting the capsule');
 
 		t.ok(capsule.id, 'Capsule should have an ID');
 
@@ -247,7 +252,9 @@ test('Setup Actors', async function () {
 	});
 
 	test('Capsule[random].get_capsule(): with valid id => #ok - capsule', async function (t) {
-		const { ok: capsule, err: err_creating } = await capsule_actor.random.get_capsule(capsule_x);
+		const { ok: capsule, err: err_capsule } = await capsule_actor.random.get_capsule(capsule_x);
+
+		t.equal(err_capsule, undefined, 'There should be no error while getting the capsule');
 
 		t.ok(capsule.id, 'Capsule should have an ID');
 
@@ -256,5 +263,36 @@ test('Setup Actors', async function () {
 			'The string representation of capsule.countdown_minutes should equal 1'
 		);
 		t.equal(capsule.locked_minutes, 60n, 'Capsule locked_minutes should be 60n');
+	});
+
+	test('Capsule[satoshi].get_capsule(): with invalid principal => #err - NotOwner', async function (t) {
+		const { ok: capsule, err: err_capsule } = await capsule_actor.satoshi.get_capsule(capsule_x);
+
+		t.equal(capsule, undefined, 'There should be no capsule');
+
+		t.deepEqual(err_capsule, { NotOwner: true });
+	});
+
+	test('Waiting 2 minutes for is_terminated to be true ', async function (t) {
+		await sleep(120000);
+		console.log('ended');
+	});
+
+	test('Capsule[satoshi].get_capsule(): with invalid principal => #err - NotOwner', async function (t) {
+		const { ok: capsule, err: err_capsule } = await capsule_actor.satoshi.get_capsule(capsule_x);
+
+		t.equal(err_capsule, undefined, 'There should be no error while getting the capsule');
+
+		t.ok(capsule.id, 'Capsule should have an ID');
+
+		t.deepEqual(capsule.files.length, 1, 'Capsule should contain exactly one file');
+		t.equal(
+			capsule.files[0].content_type,
+			'image/jpeg',
+			"File content type should be 'image/jpeg'"
+		);
+		t.equal(capsule.files[0].filename, 'poked_2.jpeg', "File filename should be 'poked_2.jpeg'");
+		t.deepEqual(capsule.authorized, [], 'Capsule authorized should be an empty array');
+		t.equal(capsule.owner_is_terminated, true, "Bye Bye'");
 	});
 });
