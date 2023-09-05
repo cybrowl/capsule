@@ -11,8 +11,9 @@ A time-based encryption for revealing things to the world at random.
 
 ```
 dfx deploy vetkd_system_api
-dfx deploy capsule
 dfx deploy file_storage --argument='(false)'
+dfx deploy capsule
+dfx deploy ui
 ```
 
 ## Env
