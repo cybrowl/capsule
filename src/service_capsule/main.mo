@@ -13,7 +13,7 @@ import Hex "./utils/Hex";
 import FileStorage "canister:file_storage";
 
 actor {
-	let { thash } = Map;
+	let { thash; phash } = Map;
 
 	public type ErrVetKD = {
 		#NotAuthorized : Bool;
@@ -54,6 +54,7 @@ actor {
 	};
 
 	private var capsules = Map.new<CapsuleId, Capsule>(thash);
+	private var capsule_owner = Map.new<Principal, CapsuleId>(phash);
 
 	public query func version() : async Nat {
 		return 1;
@@ -122,6 +123,7 @@ actor {
 				};
 
 				ignore Map.put(capsules, thash, id, capsule);
+				ignore Map.put(capsule_owner, phash, caller, id);
 
 				return #ok(#CreatedCapsule(true));
 			};
@@ -257,16 +259,6 @@ actor {
 	// NOTE: this changes if in local vs prod
 	let vetkd_system_api : VETKD_SYSTEM_API = actor ("p4cnc-5aaaa-aaaag-abwgq-cai");
 
-	public shared func app_vetkd_public_key(derivation_path : [Blob]) : async Text {
-		let { public_key } = await vetkd_system_api.vetkd_public_key({
-			canister_id = null;
-			derivation_path;
-			key_id = { curve = #bls12_381; name = "test_key_1" };
-		});
-
-		Hex.encode(Blob.toArray(public_key));
-	};
-
 	// symmetric
 	public shared func symmetric_key_verification_key() : async Text {
 		// TODO: if capsule is locked do NOT verify key
@@ -309,6 +301,16 @@ actor {
 
 		Hex.encode(Blob.toArray(encrypted_key));
 	};
+
+	// public shared func app_vetkd_public_key(derivation_path : [Blob]) : async Text {
+	//     let { public_key } = await vetkd_system_api.vetkd_public_key({
+	//         canister_id = null;
+	//         derivation_path;
+	//         key_id = { curve = #bls12_381; name = "test_key_1" };
+	//     });
+
+	//     Hex.encode(Blob.toArray(public_key));
+	// };
 
 	// ibe
 	// public shared func ibe_encryption_key() : async Text {

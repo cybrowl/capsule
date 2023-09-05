@@ -4,6 +4,8 @@
 	import { actor_capsule, actor_file_storage } from '$stores_ref/actors';
 	import { auth_actors, login, crypto_service, init_auth } from '$stores_ref/auth_client';
 	import { get } from 'lodash';
+	import { DateTime } from 'luxon';
+
 	import { AssetManager } from '../../libs/file_storage';
 	import { CryptoService } from '../../libs/crypto';
 	import init_vetkd_wasm from 'ic-vetkd-utils';
@@ -251,7 +253,11 @@
 							{#each files as { filename, created, content_type, url }}
 								<tr>
 									<td class="py-2 px-4 border-b border-zinc-900">{filename}</td>
-									<td class="py-2 px-4 border-b border-zinc-900">{created}</td>
+									<td class="py-2 px-4 border-b border-zinc-900"
+										>{DateTime.fromMillis(Number(created) / 1000000).toLocaleString(
+											DateTime.DATETIME_MED
+										)}</td
+									>
 									<td class="py-2 px-4 border-b border-zinc-900">{content_type}</td>
 									<td class="py-2 px-4 border-b border-zinc-900">
 										<button
