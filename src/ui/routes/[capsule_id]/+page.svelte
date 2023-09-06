@@ -100,7 +100,11 @@
 
 		try {
 			if ($actor_capsule.loggedIn) {
-				window.location.reload();
+				let { ok: capsule, err: error } = await $actor_capsule.actor.get_capsule(capsule_id);
+
+				if (capsule) {
+					window.location.reload();
+				}
 			}
 		} catch (error) {
 			console.log('handleAuth - error: ', error);
@@ -108,10 +112,10 @@
 	}
 
 	async function handleAccountCreation(kind) {
-		is_loading = true;
-		is_loading_msg = 'Creating Account';
-
 		if ($actor_capsule.loggedIn === true) {
+			is_loading = true;
+			is_loading_msg = 'Creating Account';
+
 			let exists = await $actor_capsule.actor.check_capsule_exists(capsule_id);
 
 			if (exists === false) {
@@ -120,11 +124,11 @@
 				});
 
 				window.location.reload();
+			} else {
+				is_loading = false;
+				is_loading_msg = '';
 			}
 		}
-
-		is_loading = false;
-		is_loading_msg = '';
 	}
 
 	function handleLoginClick() {
