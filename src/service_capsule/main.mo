@@ -374,6 +374,7 @@ actor {
 			case (_) {};
 		};
 
+		// TODO: (Capsule) execute only if capsule is unlocked
 		// TODO: if capsule is locked do NOT return key
 
 		let { encrypted_key } = await vetkd_system_api.vetkd_encrypted_key({

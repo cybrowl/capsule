@@ -408,7 +408,36 @@
 						<!-- Time View -->
 						{#if views.time_selected === true}
 							<div class="text-white m-10 p-10">
-								<label for="numberInput" class="block mb-2 font-medium">Countdown to Unlock</label>
+								{#if 'Terminated' in capsule_ref?.kind}
+									<div class="mb-10 font-medium flex flex-col gap-y-4">
+										<span>
+											<strong>Last Login:</strong>
+											<p>
+												{DateTime.fromMillis(
+													Number(capsule_ref.last_login) / 1000000
+												).toLocaleString(DateTime.DATETIME_MED)}
+											</p>
+										</span>
+
+										<span>
+											<strong>Countdown Constant:</strong>
+											<p>
+												{capsule_ref.countdown_minutes} minutes
+											</p>
+										</span>
+									</div>
+								{/if}
+
+								{#if 'Capsule' in capsule_ref?.kind}
+									<label for="numberInput" class="block mb-2 font-medium">Add Minutes to Lock</label
+									>
+								{/if}
+								{#if 'Terminated' in capsule_ref?.kind}
+									<label for="numberInput" class="block mb-2 font-medium"
+										>Countdown Minutes Constant to Unlock</label
+									>
+								{/if}
+
 								<input
 									id="numberInput"
 									type="number"
@@ -448,7 +477,7 @@
 
 								<button
 									class="bg-gray-800 hover:bg-gray-600 font-bold ml-4 py-2 px-6 rounded"
-									on:click={() => console.log('')}
+									on:click={() => console.log('update')}
 								>
 									Update
 								</button>
