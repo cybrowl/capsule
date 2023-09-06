@@ -36,11 +36,8 @@
 		// get owner principal
 		let { ok: capsule, err: error } = await $actor_capsule.actor.get_capsule(capsule_id);
 
-		console.log('capsule 1: ', capsule);
-		console.log('error 1: ', error);
-
 		// if capsule doesn't exist, then return
-		if (error.CapsuleNotFound) {
+		if (error && error.CapsuleNotFound) {
 			is_loading = false;
 			is_loading_msg = '';
 
@@ -49,26 +46,29 @@
 
 		if (capsule) {
 			has_capsule = true;
-		}
 
-		const cryptoService = new CryptoService($actor_capsule.actor);
-		crypto_service.set(cryptoService);
+			console.group('%cCapsule Information', 'color: blue; font-weight: bold;');
+			console.log('%cCapsule:', 'color: green;', capsule);
+			console.groupEnd();
 
-		await cryptoService.init_caller(capsule_id, capsule.owner);
+			const owner_principal = capsule.owner._arr;
 
-		// NOTE: Another way of doing encryption based on password
-		// await $crypto_service.init_pw('ocean');
+			const cryptoService = new CryptoService($actor_capsule.actor);
+			crypto_service.set(cryptoService);
 
-		let { ok: capsule_ } = await $actor_capsule.actor.get_capsule(capsule_id);
-		console.log('capsule 2: ', capsule_.files);
+			await cryptoService.init_caller(capsule.id, owner_principal);
 
-		if ($actor_capsule.loggedIn === true) {
-			let { ok: capsule } = await $actor_capsule.actor.get_capsule(capsule_id);
+			// NOTE: Another way of doing encryption based on password
+			// await $crypto_service.init_pw('ocean');
 
-			files = capsule.files;
+			if ($actor_capsule.loggedIn === true) {
+				let { ok: capsule } = await $actor_capsule.actor.get_capsule(capsule_id);
 
-			is_loading = false;
-			is_loading_msg = '';
+				files = capsule.files;
+
+				is_loading = false;
+				is_loading_msg = '';
+			}
 		}
 	});
 
@@ -89,6 +89,9 @@
 	}
 
 	async function handleAccountCreation(kind) {
+		is_loading = true;
+		is_loading_msg = 'Creating Account';
+
 		if ($actor_capsule.loggedIn === true) {
 			let exists = await $actor_capsule.actor.check_capsule_exists(capsule_id);
 
@@ -96,8 +99,18 @@
 				let { ok: created, err: error } = await $actor_capsule.actor.create_capsule(capsule_id, {
 					[kind]: null
 				});
+
+				let { ok: capsule } = await $actor_capsule.actor.get_capsule(capsule_id);
+
+				if (capsule) {
+					has_capsule = true;
+					files = capsule.files;
+				}
 			}
 		}
+
+		is_loading = false;
+		is_loading_msg = '';
 	}
 
 	function handleLoginClick() {
