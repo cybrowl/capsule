@@ -17,10 +17,24 @@
 
 	let capsule_id = '';
 	let capsule_ref = {};
+	let has_capsule = false;
+
 	let files = [];
+
 	let is_loading = false;
 	let is_loading_msg = '';
-	let has_capsule = false;
+
+	let views = {
+		home_selected: true,
+		time_selected: false,
+		settings_selected: false
+	};
+
+	const views_deselect = {
+		home_selected: false,
+		time_selected: false,
+		settings_selected: false
+	};
 
 	onMount(async () => {
 		is_loading = true;
@@ -244,8 +258,9 @@
 		<img src="header.jpeg" alt="Description" class="absolute inset-0 w-full h-full object-cover" />
 	</div>
 
-	<!-- Right column with the table -->
+	<!-- Right column with the files table -->
 	<div class="col-span-8 grid grid-rows-5 bg-gray-950">
+		<!-- Login Screen -->
 		{#if $actor_capsule.loggedIn === false}
 			<div class="row-span-5 flex justify-center items-center">
 				<button
@@ -257,6 +272,7 @@
 			</div>
 		{/if}
 
+		<!-- Loading Screen -->
 		{#if is_loading === true && $actor_capsule.loggedIn}
 			<div class="row-span-5 bg-gray-950 flex justify-center items-center flex-col">
 				<JellyFish />
@@ -265,6 +281,7 @@
 		{/if}
 
 		{#if is_loading === false && $actor_capsule.loggedIn}
+			<!-- Create Account Screen -->
 			{#if has_capsule === false}
 				<div class="row-span-5 flex justify-center items-center space-x-6 mx-10">
 					<div
@@ -278,7 +295,6 @@
 					>
 						<div class="bg-zinc-900 hover:bg-zinc-700 rounded p-6 flex flex-col items-center">
 							<img src="time_capsule.png" alt="Capsule Icon" class="mb-4 w-16 h-16" />
-							<!-- Placeholder icon -->
 							<span class="text-gray-300 font-bold">Create Identity Time Capsule</span>
 							<p class="text-gray-300">
 								Preserve your memories, moments, or files in a Time Capsule, sealed today and
@@ -298,7 +314,6 @@
 					>
 						<div class="bg-zinc-900 hover:bg-zinc-700 rounded p-6 flex flex-col items-center">
 							<img src="dead_bunny.png" alt="Switch Icon" class="mb-4 w-16 h-16" />
-							<!-- Placeholder icon -->
 							<span class="text-gray-300 font-bold">Create Fail-Safe Switch</span>
 							<p class="text-gray-300">
 								Activate the Fail-Safe Switch, a safety mechanism designed to ensure protection by
@@ -309,6 +324,7 @@
 				</div>
 			{/if}
 
+			<!-- File List Screen -->
 			{#if has_capsule === true}
 				<div class="row-span-5 relative">
 					<div class="overflow-auto max-h-[100vh]">
@@ -320,39 +336,78 @@
 								Upload
 							</button>
 
-							<Icon name="time" />
+							<span class="flex flex-row gap-x-4">
+								<Icon
+									name="home"
+									on:click={() => {
+										views = {
+											...views_deselect,
+											home_selected: true
+										};
+									}}
+								/>
+								<Icon
+									name="time"
+									on:click={() => {
+										views = {
+											...views_deselect,
+											time_selected: true
+										};
+									}}
+								/>
+
+								<Icon
+									name="settings"
+									on:click={() => {
+										views = {
+											...views_deselect,
+											settings_selected: true
+										};
+									}}
+								/>
+							</span>
 						</div>
 
-						<table class="min-w-full text-white">
-							<thead>
-								<tr>
-									<th class="py-2 px-4 border-b border-zinc-900 text-left">Filename</th>
-									<th class="py-2 px-4 border-b border-zinc-900 text-left">Created</th>
-									<th class="py-2 px-4 border-b border-zinc-900 text-left">Content Type</th>
-								</tr>
-							</thead>
-							<tbody>
-								{#each files as { filename, created, content_type, url }}
+						{#if views.home_selected === true}
+							<table class="min-w-full text-white">
+								<thead>
 									<tr>
-										<td class="py-2 px-4 border-b border-zinc-900">{filename}</td>
-										<td class="py-2 px-4 border-b border-zinc-900"
-											>{DateTime.fromMillis(Number(created) / 1000000).toLocaleString(
-												DateTime.DATETIME_MED
-											)}</td
-										>
-										<td class="py-2 px-4 border-b border-zinc-900">{content_type}</td>
-										<td class="py-2 px-4 border-b border-zinc-900">
-											<button
-												class="bg-zinc-900 hover:bg-zinc-700 text-white font-bold py-2 px-4 rounded"
-												on:click={() => decryptAndDownloadFile(url, filename)}
-											>
-												Download
-											</button>
-										</td>
+										<th class="py-2 px-4 border-b border-zinc-900 text-left">Filename</th>
+										<th class="py-2 px-4 border-b border-zinc-900 text-left">Created</th>
+										<th class="py-2 px-4 border-b border-zinc-900 text-left">Content Type</th>
 									</tr>
-								{/each}
-							</tbody>
-						</table>
+								</thead>
+								<tbody>
+									{#each files as { filename, created, content_type, url }}
+										<tr>
+											<td class="py-2 px-4 border-b border-zinc-900">{filename}</td>
+											<td class="py-2 px-4 border-b border-zinc-900"
+												>{DateTime.fromMillis(Number(created) / 1000000).toLocaleString(
+													DateTime.DATETIME_MED
+												)}</td
+											>
+											<td class="py-2 px-4 border-b border-zinc-900">{content_type}</td>
+											<td class="py-2 px-4 border-b border-zinc-900">
+												<button
+													class="bg-zinc-900 hover:bg-zinc-700 text-white font-bold py-2 px-4 rounded"
+													on:click={() => decryptAndDownloadFile(url, filename)}
+												>
+													Download
+												</button>
+											</td>
+										</tr>
+									{/each}
+								</tbody>
+							</table>
+						{/if}
+
+						{#if views.time_selected === true}
+							<div class="text-white">Time</div>
+						{/if}
+
+						{#if views.settings_selected === true}
+							<div class="text-white">Settings</div>
+						{/if}
 					</div>
 				</div>
 			{/if}

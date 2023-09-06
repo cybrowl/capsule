@@ -19,7 +19,7 @@
 </script>
 
 <svg
-	class={$$props.class}
+	class={`${$$props.class} focus:outline-none focus:border focus:border-white`}
 	{focusable}
 	width={size}
 	height={size}
