@@ -36,6 +36,8 @@
 		settings_selected: false
 	};
 
+	let time_input = 0;
+
 	onMount(async () => {
 		is_loading = true;
 		is_loading_msg = 'Setting Up Encryption';
@@ -328,6 +330,7 @@
 			{#if has_capsule === true}
 				<div class="row-span-5 relative">
 					<div class="overflow-auto max-h-[100vh]">
+						<!-- Actions Bar -->
 						<div class="actions p-4 flex justify-between items-center">
 							<button
 								class="bg-zinc-900 hover:bg-zinc-700 text-white font-bold py-2 px-4 rounded"
@@ -368,6 +371,7 @@
 							</span>
 						</div>
 
+						<!-- Home View -->
 						{#if views.home_selected === true}
 							<table class="min-w-full text-white">
 								<thead>
@@ -401,10 +405,57 @@
 							</table>
 						{/if}
 
+						<!-- Time View -->
 						{#if views.time_selected === true}
-							<div class="text-white">Time</div>
+							<div class="text-white m-10 p-10">
+								<label for="numberInput" class="block mb-2 font-medium">Countdown to Unlock</label>
+								<input
+									id="numberInput"
+									type="number"
+									class="bg-gray-800 p-2 w-1/4 rounded text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-600"
+									bind:value={time_input}
+									on:keydown={(event) => {
+										if (
+											![
+												'0',
+												'1',
+												'2',
+												'3',
+												'4',
+												'5',
+												'6',
+												'7',
+												'8',
+												'9',
+												'Backspace',
+												'ArrowLeft',
+												'ArrowRight',
+												'Tab',
+												'Delete'
+											].includes(event.key)
+										) {
+											event.preventDefault();
+										}
+									}}
+									on:input={(event) => {
+										if (/^\d+$/.test(event.target.value) || event.target.value === '') {
+											time_input = event.target.value;
+										} else {
+											event.target.value = time_input;
+										}
+									}}
+								/>
+
+								<button
+									class="bg-gray-800 hover:bg-gray-600 font-bold ml-4 py-2 px-6 rounded"
+									on:click={() => console.log('')}
+								>
+									Update
+								</button>
+							</div>
 						{/if}
 
+						<!-- Settings View -->
 						{#if views.settings_selected === true}
 							<div class="text-white">Settings</div>
 						{/if}
