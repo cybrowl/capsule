@@ -18,10 +18,13 @@
 	let files = [];
 	let is_loading = false;
 	let is_loading_msg = '';
+	let has_capsule = false;
 
 	onMount(async () => {
 		is_loading = true;
 		is_loading_msg = 'Setting Up Encryption';
+
+		capsule_id = $page.params.capsule_id;
 
 		await init_auth();
 
@@ -30,23 +33,36 @@
 
 		await init_vetkd_wasm();
 
+		// get owner principal
+		let { ok: capsule, err: error } = await $actor_capsule.actor.get_capsule(capsule_id);
+
+		console.log('capsule 1: ', capsule);
+		console.log('error 1: ', error);
+
+		// if capsule doesn't exist, then return
+		if (error.CapsuleNotFound) {
+			is_loading = false;
+			is_loading_msg = '';
+
+			return null;
+		}
+
+		if (capsule) {
+			has_capsule = true;
+		}
+
 		const cryptoService = new CryptoService($actor_capsule.actor);
 		crypto_service.set(cryptoService);
 
-		await cryptoService.init_caller();
+		await cryptoService.init_caller(capsule_id, capsule.owner);
 
 		// NOTE: Another way of doing encryption based on password
 		// await $crypto_service.init_pw('ocean');
 
-		capsule_id = $page.params.capsule_id;
+		let { ok: capsule_ } = await $actor_capsule.actor.get_capsule(capsule_id);
+		console.log('capsule 2: ', capsule_.files);
 
 		if ($actor_capsule.loggedIn === true) {
-			let exists = await $actor_capsule.actor.check_capsule_exists(capsule_id);
-
-			if (exists === false) {
-				let { ok: created, err: error } = await $actor_capsule.actor.create_capsule(capsule_id);
-			}
-
 			let { ok: capsule } = await $actor_capsule.actor.get_capsule(capsule_id);
 
 			files = capsule.files;
@@ -72,13 +88,20 @@
 		}
 	}
 
-	function handleLoginClick() {
-		login(true, handleAuth);
+	async function handleAccountCreation(kind) {
+		if ($actor_capsule.loggedIn === true) {
+			let exists = await $actor_capsule.actor.check_capsule_exists(capsule_id);
+
+			if (exists === false) {
+				let { ok: created, err: error } = await $actor_capsule.actor.create_capsule(capsule_id, {
+					[kind]: null
+				});
+			}
+		}
 	}
 
-	function handleCreateAccountClick() {
-		// handle add card logic here
-		alert('Add card button clicked!');
+	function handleLoginClick() {
+		login(true, handleAuth);
 	}
 
 	async function fetchFile(fileUrl) {
@@ -209,14 +232,14 @@
 	<div class="col-span-4 relative">
 		<img src="header.jpeg" alt="Description" class="absolute inset-0 w-full h-full object-cover" />
 	</div>
-	<div class="col-span-8 grid grid-rows-5">
+	<div class="col-span-8 grid grid-rows-5 bg-gray-950">
 		{#if $actor_capsule.loggedIn === false}
-			<div class="row-span-5 bg-gray-950 flex justify-center items-center">
+			<div class="row-span-5 flex justify-center items-center">
 				<button
-					class="bg-zinc-300 hover:bg-stone-100 text-violet-500 font-bold py-2 px-4 rounded"
+					class="bg-zinc-300 hover:bg-stone-100 text-violet-500 font-bold py-4 px-6 rounded"
 					on:click={handleLoginClick}
 				>
-					Login
+					Identity Login
 				</button>
 			</div>
 		{/if}
@@ -229,49 +252,95 @@
 		{/if}
 
 		{#if is_loading === false && $actor_capsule.loggedIn}
-			<div class="row-span-5 bg-gray-950 relative">
-				<div class="overflow-auto max-h-[100vh]">
-					<div class="actions p-4">
-						<button
-							class="bg-zinc-900 hover:bg-zinc-700 text-white font-bold py-2 px-4 rounded"
-							on:click={triggerFileSelectionBrowser}
-						>
-							Upload
-						</button>
+			{#if has_capsule === false}
+				<div class="row-span-5 flex justify-center items-center space-x-6 mx-10">
+					<div
+						role="button"
+						class="card transition-shadow hover:shadow-lg cursor-pointer"
+						on:click={() => handleAccountCreation('Capsule')}
+						on:keydown={(event) => {
+							if (event.key === 'Enter') handleAccountCreation('Capsule');
+						}}
+						tabindex="0"
+					>
+						<div class="bg-zinc-900 hover:bg-zinc-700 rounded p-6 flex flex-col items-center">
+							<img src="time_capsule.png" alt="Capsule Icon" class="mb-4 w-16 h-16" />
+							<!-- Placeholder icon -->
+							<span class="text-gray-300 font-bold">Create Identity Time Capsule</span>
+							<p class="text-gray-300">
+								Preserve your memories, moments, or files in a Time Capsule, sealed today and
+								intended for discovery or reflection in the future.
+							</p>
+						</div>
 					</div>
 
-					<table class="min-w-full text-white">
-						<thead>
-							<tr>
-								<th class="py-2 px-4 border-b border-zinc-900 text-left">Filename</th>
-								<th class="py-2 px-4 border-b border-zinc-900 text-left">Created</th>
-								<th class="py-2 px-4 border-b border-zinc-900 text-left">Content Type</th>
-							</tr>
-						</thead>
-						<tbody>
-							{#each files as { filename, created, content_type, url }}
-								<tr>
-									<td class="py-2 px-4 border-b border-zinc-900">{filename}</td>
-									<td class="py-2 px-4 border-b border-zinc-900"
-										>{DateTime.fromMillis(Number(created) / 1000000).toLocaleString(
-											DateTime.DATETIME_MED
-										)}</td
-									>
-									<td class="py-2 px-4 border-b border-zinc-900">{content_type}</td>
-									<td class="py-2 px-4 border-b border-zinc-900">
-										<button
-											class="bg-zinc-900 hover:bg-zinc-700 text-white font-bold py-2 px-4 rounded"
-											on:click={() => decryptAndDownloadFile(url, filename)}
-										>
-											Download
-										</button>
-									</td>
-								</tr>
-							{/each}
-						</tbody>
-					</table>
+					<div
+						role="button"
+						class="card transition-shadow hover:shadow-lg cursor-pointer"
+						on:click={() => handleAccountCreation('Terminated')}
+						on:keydown={(event) => {
+							if (event.key === 'Enter') handleAccountCreation('Terminated');
+						}}
+						tabindex="0"
+					>
+						<div class="bg-zinc-900 hover:bg-zinc-700 rounded p-6 flex flex-col items-center">
+							<img src="dead_bunny.png" alt="Switch Icon" class="mb-4 w-16 h-16" />
+							<!-- Placeholder icon -->
+							<span class="text-gray-300 font-bold">Create Fail-Safe Switch</span>
+							<p class="text-gray-300">
+								Activate the Fail-Safe Switch, a safety mechanism designed to ensure protection by
+								defaulting to a public state in unexpected situations or failures.
+							</p>
+						</div>
+					</div>
 				</div>
-			</div>
+			{/if}
+
+			{#if has_capsule === true}
+				<div class="row-span-5 relative">
+					<div class="overflow-auto max-h-[100vh]">
+						<div class="actions p-4">
+							<button
+								class="bg-zinc-900 hover:bg-zinc-700 text-white font-bold py-2 px-4 rounded"
+								on:click={triggerFileSelectionBrowser}
+							>
+								Upload
+							</button>
+						</div>
+
+						<table class="min-w-full text-white">
+							<thead>
+								<tr>
+									<th class="py-2 px-4 border-b border-zinc-900 text-left">Filename</th>
+									<th class="py-2 px-4 border-b border-zinc-900 text-left">Created</th>
+									<th class="py-2 px-4 border-b border-zinc-900 text-left">Content Type</th>
+								</tr>
+							</thead>
+							<tbody>
+								{#each files as { filename, created, content_type, url }}
+									<tr>
+										<td class="py-2 px-4 border-b border-zinc-900">{filename}</td>
+										<td class="py-2 px-4 border-b border-zinc-900"
+											>{DateTime.fromMillis(Number(created) / 1000000).toLocaleString(
+												DateTime.DATETIME_MED
+											)}</td
+										>
+										<td class="py-2 px-4 border-b border-zinc-900">{content_type}</td>
+										<td class="py-2 px-4 border-b border-zinc-900">
+											<button
+												class="bg-zinc-900 hover:bg-zinc-700 text-white font-bold py-2 px-4 rounded"
+												on:click={() => decryptAndDownloadFile(url, filename)}
+											>
+												Download
+											</button>
+										</td>
+									</tr>
+								{/each}
+							</tbody>
+						</table>
+					</div>
+				</div>
+			{/if}
 		{/if}
 	</div>
 

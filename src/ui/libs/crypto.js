@@ -7,12 +7,15 @@ export class CryptoService {
 		this.vetAesGcmKey = null;
 	}
 
-	async init_caller() {
+	async init_caller(capsule_id, owner) {
 		const seed = window.crypto.getRandomValues(new Uint8Array(32));
 		const tsk = new vetkd.TransportSecretKey(seed);
 
+		console.log('capsule_id: ', capsule_id);
+
 		const { ok: ek_bytes_hex, err: error } = await this.actor.encrypted_symmetric_key_for_caller(
-			tsk.public_key()
+			tsk.public_key(),
+			capsule_id
 		);
 
 		if (error) {
@@ -22,12 +25,17 @@ export class CryptoService {
 		}
 
 		const pk_bytes_hex = await this.actor.symmetric_key_verification_key();
+
+		// user principal
 		const principal = await agent.Actor.agentOf(this.actor).getPrincipal();
+
+		console.log('principal: ', principal);
+		console.log('owner: ', owner.toString());
 
 		const aes_256_gcm_key_raw = tsk.decrypt_and_hash(
 			hex_decode(ek_bytes_hex),
 			hex_decode(pk_bytes_hex),
-			principal.toUint8Array(),
+			owner._arr,
 			32,
 			new TextEncoder().encode('aes-256-gcm')
 		);
