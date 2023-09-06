@@ -457,7 +457,25 @@
 
 						<!-- Settings View -->
 						{#if views.settings_selected === true}
-							<div class="text-white">Settings</div>
+							<div class="text-white m-10 p-10">
+								<div class="mb-10">
+									{#if 'Capsule' in capsule_ref?.kind}
+										<p><strong>Capsule Kind:</strong> Identity Time Capsule</p>
+									{/if}
+									{#if 'Terminated' in capsule_ref?.kind}
+										<p><strong>Capsule Kind:</strong> Terminated Time Capsule</p>
+									{/if}
+								</div>
+
+								<button
+									class="bg-zinc-900 hover:bg-zinc-700 text-red-500 font-bold py-2 px-4 rounded"
+									on:click={() => {
+										console.log('logout');
+									}}
+								>
+									Logout
+								</button>
+							</div>
 						{/if}
 					</div>
 				</div>
