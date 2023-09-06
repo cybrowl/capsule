@@ -1,5 +1,5 @@
 <script>
-	import { range, durationUnitRegex } from './utils';
+	import { range, durationUnitRegex } from '../libs/utils';
 	export let color = '#7A71DE';
 	export let unit = 'px';
 	export let duration = '2.5s';

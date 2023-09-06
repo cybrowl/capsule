@@ -1,6 +1,5 @@
 <script>
 	import { onMount } from 'svelte';
-	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { actor_capsule, actor_file_storage } from '$stores_ref/actors';
 	import { auth_actors, login, crypto_service, init_auth } from '$stores_ref/auth_client';
@@ -10,11 +9,14 @@
 	import { AssetManager } from '../../libs/file_storage';
 	import { CryptoService } from '../../libs/crypto';
 	import init_vetkd_wasm from 'ic-vetkd-utils';
-	import JellyFish from '../loading/JellyFish.svelte';
+
+	import JellyFish from '../../components/JellyFish.svelte';
+	import Icon from '../../components/Icon.svelte';
 
 	let file_input_elem;
 
 	let capsule_id = '';
+	let capsule_ref = {};
 	let files = [];
 	let is_loading = false;
 	let is_loading_msg = '';
@@ -46,6 +48,7 @@
 
 		if (capsule) {
 			has_capsule = true;
+			capsule_ref = capsule;
 
 			console.group('%cCapsule Information', 'color: blue; font-weight: bold;');
 			console.log('%cCapsule:', 'color: green;', capsule);
@@ -100,12 +103,7 @@
 					[kind]: null
 				});
 
-				let { ok: capsule } = await $actor_capsule.actor.get_capsule(capsule_id);
-
-				if (capsule) {
-					has_capsule = true;
-					files = capsule.files;
-				}
+				window.location.reload();
 			}
 		}
 
@@ -245,6 +243,8 @@
 	<div class="col-span-4 relative">
 		<img src="header.jpeg" alt="Description" class="absolute inset-0 w-full h-full object-cover" />
 	</div>
+
+	<!-- Right column with the table -->
 	<div class="col-span-8 grid grid-rows-5 bg-gray-950">
 		{#if $actor_capsule.loggedIn === false}
 			<div class="row-span-5 flex justify-center items-center">
@@ -312,13 +312,15 @@
 			{#if has_capsule === true}
 				<div class="row-span-5 relative">
 					<div class="overflow-auto max-h-[100vh]">
-						<div class="actions p-4">
+						<div class="actions p-4 flex justify-between items-center">
 							<button
 								class="bg-zinc-900 hover:bg-zinc-700 text-white font-bold py-2 px-4 rounded"
 								on:click={triggerFileSelectionBrowser}
 							>
 								Upload
 							</button>
+
+							<Icon name="time" />
 						</div>
 
 						<table class="min-w-full text-white">
