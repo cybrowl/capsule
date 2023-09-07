@@ -75,7 +75,7 @@ actor {
 		let now = Time.now();
 		let difference = now - start_time;
 
-		let differenceInMinutes = difference / (1000_000_000 * 60);
+		let differenceInMinutes = difference / (1_000_000_000 * 60);
 
 		return differenceInMinutes;
 	};
@@ -83,7 +83,7 @@ actor {
 	private func has_duration_elapsed(start_time : Time, duration : Nat) : Bool {
 		let timeElapsed = time_elapsed_since(start_time);
 
-		return timeElapsed > duration;
+		return timeElapsed >= duration;
 	};
 
 	private func check_owner_terminated(last_login : Time, countdown : Nat) : Bool {
