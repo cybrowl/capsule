@@ -2,7 +2,13 @@
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
 	import { actor_capsule, actor_file_storage } from '$stores_ref/actors';
-	import { auth_actors, login, crypto_service, init_auth } from '$stores_ref/auth_client';
+	import {
+		auth_actors,
+		login,
+		auth_logout_all,
+		crypto_service,
+		init_auth
+	} from '$stores_ref/auth_client';
 	import { get } from 'lodash';
 	import { DateTime } from 'luxon';
 
@@ -256,11 +262,22 @@
 	async function handleUpdateCountdown() {
 		if ($actor_capsule.loggedIn) {
 			is_loading = true;
-			is_loading_msg = 'Updating Countdown';
 
 			let timeInputInt = parseInt(time_input, 10);
-			const { ok: updated_countdown, err: err_update } =
-				await $actor_capsule.actor.update_countdown(capsule_id, timeInputInt);
+
+			if ('Terminated' in capsule_ref?.kind) {
+				is_loading_msg = 'Updating Countdown';
+
+				const { ok: updated_countdown, err: err_update_countdown } =
+					await $actor_capsule.actor.update_countdown(capsule_id, timeInputInt);
+			} else {
+				is_loading_msg = 'Updating Locked Minutes';
+
+				const { ok: updated_locked, err: err_update_locked } = await $actor_capsule.actor.add_time(
+					capsule_id,
+					timeInputInt
+				);
+			}
 
 			let { ok: capsule } = await $actor_capsule.actor.get_capsule(capsule_id);
 			capsule_ref = capsule;
@@ -429,6 +446,30 @@
 						<!-- Time View -->
 						{#if views.time_selected === true}
 							<div class="text-white m-10 p-10">
+								{#if 'Capsule' in capsule_ref?.kind}
+									<div class="mb-10 font-medium flex flex-col gap-y-4">
+										<span>
+											<strong>Locked Start:</strong>
+											{#if capsule_ref.locked_start < 2}
+												<p>None</p>
+											{:else}
+												<p>
+													{DateTime.fromMillis(
+														Number(capsule_ref.locked_start) / 1000000
+													).toLocaleString(DateTime.DATETIME_MED)}
+												</p>
+											{/if}
+										</span>
+
+										<span>
+											<strong>Locked:</strong>
+											<p>
+												{capsule_ref.locked_minutes} minutes
+											</p>
+										</span>
+									</div>
+								{/if}
+
 								{#if 'Terminated' in capsule_ref?.kind}
 									<div class="mb-10 font-medium flex flex-col gap-y-4">
 										<span>
@@ -519,8 +560,8 @@
 
 								<button
 									class="bg-zinc-900 hover:bg-zinc-700 text-red-500 font-bold py-2 px-4 rounded"
-									on:click={() => {
-										console.log('logout');
+									on:click={async () => {
+										await auth_logout_all();
 									}}
 								>
 									Logout

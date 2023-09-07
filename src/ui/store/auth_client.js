@@ -53,7 +53,6 @@ export async function login(isProd, handleAuth) {
 
 // logout
 const logout_actor = async (actor_name, actor) => {
-	// Not sure if this even does the reset
 	const authClient = await AuthClient.create();
 
 	const isAuthenticated = await authClient.isAuthenticated();
@@ -72,7 +71,12 @@ const logout_actor = async (actor_name, actor) => {
 export const auth_logout_all = async () => {
 	await auth_client.logout();
 
-	auth_actors.forEach(({ name, actor }) => {
+	const actors_list = [
+		{ name: 'capsule', actor: actor_capsule },
+		{ name: 'file_storage', actor: actor_file_storage }
+	];
+
+	actors_list.forEach(({ name, actor }) => {
 		logout_actor(name, actor);
 	});
 };
