@@ -252,6 +252,23 @@
 			is_loading_msg = '';
 		}
 	}
+
+	async function handleUpdateCountdown() {
+		if ($actor_capsule.loggedIn) {
+			is_loading = true;
+			is_loading_msg = 'Updating Countdown';
+
+			let timeInputInt = parseInt(time_input, 10);
+			const { ok: updated_countdown, err: err_update } =
+				await $actor_capsule.actor.update_countdown(capsule_id, timeInputInt);
+
+			let { ok: capsule } = await $actor_capsule.actor.get_capsule(capsule_id);
+			capsule_ref = capsule;
+
+			is_loading = false;
+			is_loading_msg = '';
+		}
+	}
 </script>
 
 <svelte:head>
@@ -481,7 +498,7 @@
 
 								<button
 									class="bg-gray-800 hover:bg-gray-600 font-bold ml-4 py-2 px-6 rounded"
-									on:click={() => console.log('update')}
+									on:click={handleUpdateCountdown}
 								>
 									Update
 								</button>
