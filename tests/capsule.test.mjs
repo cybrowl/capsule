@@ -28,9 +28,12 @@ let random_identity = Ed25519KeyIdentity.generate();
 let capsule_actor = {};
 let file_storage_actor = {};
 
-let capsule_x = '';
+let capsule_x = ''; // Terminated Kind
+let capsule_y = ''; // Capsule Kind
 let asset_id_x = '';
-let chunk_ids = [];
+let asset_id_y = '';
+let chunk_ids_x = [];
+let chunk_ids_y = [];
 let last_login = 0;
 
 test('Setup Actors', async function () {
@@ -90,9 +93,9 @@ test('Setup Actors', async function () {
 			);
 		}
 
-		chunk_ids = await Promise.all(promises);
+		chunk_ids_x = await Promise.all(promises);
 
-		const hasChunkIds = chunk_ids.length > 2;
+		const hasChunkIds = chunk_ids_x.length > 2;
 
 		t.equal(hasChunkIds, true);
 	});
@@ -106,7 +109,7 @@ test('Setup Actors', async function () {
 			content_type: asset_content_type
 		};
 
-		const ids_sorted = chunk_ids.sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
+		const ids_sorted = chunk_ids_x.sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
 
 		const { ok: asset_id, err: error } = await file_storage_actor.random.commit_batch(
 			ids_sorted,
@@ -122,6 +125,63 @@ test('Setup Actors', async function () {
 		t.equal(asset.content_type, 'image/jpeg');
 	});
 
+	test('FileStorage[random].create_chunk(): with 6MB IMG file #ok -> chunk_ids', async function (t) {
+		const uploadChunk = async ({ chunk, order }) => {
+			return file_storage_actor.random.create_chunk(chunk, order);
+		};
+
+		const file_path = 'tests/data/poked_2.jpeg';
+
+		const asset_buffer = fs.readFileSync(file_path);
+
+		const asset_unit8Array = new Uint8Array(asset_buffer);
+
+		const promises = [];
+		const chunkSize = 2000000;
+
+		for (let start = 0, index = 0; start < asset_unit8Array.length; start += chunkSize, index++) {
+			const chunk = asset_unit8Array.slice(start, start + chunkSize);
+
+			promises.push(
+				uploadChunk({
+					chunk,
+					order: index
+				})
+			);
+		}
+
+		chunk_ids_y = await Promise.all(promises);
+
+		const hasChunkIds = chunk_ids_y.length > 2;
+
+		t.equal(hasChunkIds, true);
+	});
+
+	test('FileStorage[random].commit_batch(): with 6MB IMG file #ok -> asset_id', async function (t) {
+		const asset_filename = 'poked_2.jpeg';
+		const asset_content_type = 'image/jpeg';
+		const options = {
+			filename: asset_filename,
+			content_encoding: { Identity: null },
+			content_type: asset_content_type
+		};
+
+		const ids_sorted = chunk_ids_y.sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
+
+		const { ok: asset_id, err: error } = await file_storage_actor.random.commit_batch(
+			ids_sorted,
+			options
+		);
+
+		asset_id_y = asset_id;
+
+		const { ok: asset } = await file_storage_actor.random.get(asset_id);
+
+		t.equal(error, undefined);
+		t.equal(asset.filename, 'poked_2.jpeg');
+		t.equal(asset.content_type, 'image/jpeg');
+	});
+
 	test('Capsule[random].check_capsule_exists(): with invalid id => #err - false', async function (t) {
 		let capsule_id = uuidv4();
 		let exists = await capsule_actor.random.check_capsule_exists(capsule_id);
@@ -129,6 +189,76 @@ test('Setup Actors', async function () {
 		t.equal(exists, false);
 	});
 
+	// Capsule
+	test('Capsule[random].create_capsule(): with valid id => #ok - CreatedCapsule', async function (t) {
+		let capsule_id = uuidv4();
+		capsule_y = capsule_id;
+
+		let kind = {
+			Capsule: null
+		};
+
+		const { ok: created, err: err_creating } = await capsule_actor.random.create_capsule(
+			capsule_id,
+			kind
+		);
+
+		t.deepEqual(created, { CreatedCapsule: true });
+		t.equal(err_creating, undefined);
+	});
+
+	test('Capsule[random].add_file(): with valid asset and capsule => #ok - AddedFile', async function (t) {
+		const { ok: added_file, err: err_adding } = await capsule_actor.random.add_file(
+			capsule_y,
+			asset_id_y
+		);
+
+		t.deepEqual(added_file, { AddedFile: true }, 'The file should be successfully added');
+
+		t.equal(err_adding, undefined, 'There should be no error while adding the file');
+	});
+
+	test('Capsule[random].get_capsule(): with valid id => #ok - capsule', async function (t) {
+		const { ok: capsule, err: err_capsule } = await capsule_actor.random.get_capsule(capsule_y);
+
+		t.equal(capsule.is_unlocked, true, 'Capsule is_unlocked should be true');
+		t.equal(capsule.files.length, 1, 'Capsule files should have 1');
+		t.equal(err_capsule, undefined, 'There should be no error while getting capsule');
+	});
+
+	test('Capsule[random].add_time(): with capsule id and minutes => #ok - AddedTime', async function (t) {
+		let minutes = 1;
+
+		const { ok: added_time, err: err_adding } = await capsule_actor.random.add_time(
+			capsule_y,
+			minutes
+		);
+
+		t.deepEqual(added_time, { AddedTime: true }, 'The time should be successfully added');
+		t.equal(err_adding, undefined, 'There should be no error while adding the file');
+	});
+
+	test('Capsule[random].get_capsule(): with valid id => #ok - capsule', async function (t) {
+		const { ok: capsule, err: err_capsule } = await capsule_actor.random.get_capsule(capsule_y);
+
+		t.equal(capsule.is_unlocked, false, 'Capsule is_unlocked should be false');
+		t.deepEqual(capsule.files, [], 'Capsule files should be an empty array');
+		t.equal(err_capsule, undefined, 'There should be no error while getting capsule');
+	});
+
+	test('Waiting 2 minutes for is_terminated to be true ', async function (t) {
+		await sleep(120000);
+	});
+
+	test('Capsule[random].get_capsule(): with valid id => #ok - capsule', async function (t) {
+		const { ok: capsule, err: err_capsule } = await capsule_actor.random.get_capsule(capsule_y);
+
+		t.equal(capsule.files.length, 1, 'Capsule files should have 1');
+		t.equal(capsule.is_unlocked, true, 'Capsule is_unlocked should be true');
+		t.equal(err_capsule, undefined, 'There should be no error while getting capsule');
+	});
+
+	// Terminated
 	test('Capsule[random].create_capsule(): with valid id => #ok - CreatedCapsule', async function (t) {
 		let capsule_id = uuidv4();
 		capsule_x = capsule_id;
@@ -211,35 +341,6 @@ test('Setup Actors', async function () {
 		t.equal(capsule.locked_minutes, 0n, 'Capsule locked_minutes should be 0n');
 	});
 
-	test('Capsule[random].add_time(): with capsule id and minutes => #ok - AddedTime', async function (t) {
-		let minutes = 60;
-
-		const { ok: added_time, err: err_adding } = await capsule_actor.random.add_time(
-			capsule_x,
-			minutes
-		);
-
-		t.deepEqual(added_time, { AddedTime: true }, 'The time should be successfully added');
-
-		t.equal(err_adding, undefined, 'There should be no error while adding the file');
-	});
-
-	test('Capsule[random].get_capsule(): with valid id => #ok - capsule', async function (t) {
-		const { ok: capsule, err: err_capsule } = await capsule_actor.random.get_capsule(capsule_x);
-
-		last_login = capsule.last_login;
-
-		t.equal(err_capsule, undefined, 'There should be no error while getting the capsule');
-
-		t.ok(capsule.id, 'Capsule should have an ID');
-
-		t.ok(
-			capsule.locked_start.toString().length > 7,
-			'The string representation of capsule.locked_start should have a length greater than 7'
-		);
-		t.equal(capsule.locked_minutes, 60n, 'Capsule locked_minutes should be 60n');
-	});
-
 	test('Capsule[random].update_countdown(): with 1 min => #ok - capsule', async function (t) {
 		let minutes = 1;
 
@@ -267,7 +368,6 @@ test('Setup Actors', async function () {
 			capsule.countdown_minutes.toString().length === 1,
 			'The string representation of capsule.countdown_minutes should equal 1'
 		);
-		t.equal(capsule.locked_minutes, 60n, 'Capsule locked_minutes should be 60n');
 	});
 
 	test('Capsule[satoshi].get_capsule(): with invalid principal => #err - NotOwner', async function (t) {

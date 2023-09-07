@@ -17,6 +17,7 @@ actor {
 
 	public type ErrVetKD = {
 		#NotAuthorized : Bool;
+		#Locked : Bool;
 	};
 
 	public type Kind = {
@@ -47,6 +48,7 @@ actor {
 		countdown_minutes : Nat;
 		last_login : Time;
 
+		is_unlocked : Bool;
 		locked_minutes : Nat;
 		locked_start : Time;
 	};
@@ -57,6 +59,7 @@ actor {
 		#NotOwner : Bool;
 		#CapsuleNotFound : Bool;
 		#CapsuleExists : Bool;
+		#WrongKind : Bool;
 	};
 
 	public type Ok = {
@@ -68,23 +71,23 @@ actor {
 	private var capsules = Map.new<CapsuleId, Capsule>(thash);
 	private var capsule_owner = Map.new<Principal, CapsuleId>(phash);
 
-	private func time_since_last_login(last_login : Time) : Int {
+	private func time_elapsed_since(start_time : Time) : Int {
 		let now = Time.now();
-		let difference = now - last_login;
+		let difference = now - start_time;
 
 		let differenceInMinutes = difference / (1000_000_000 * 60);
 
 		return differenceInMinutes;
 	};
 
-	private func has_countdown_elapsed(last_login : Time, countdown : Nat) : Bool {
-		let timeElapsed = time_since_last_login(last_login);
+	private func has_duration_elapsed(start_time : Time, duration : Nat) : Bool {
+		let timeElapsed = time_elapsed_since(start_time);
 
-		return timeElapsed > countdown;
+		return timeElapsed > duration;
 	};
 
 	private func check_owner_terminated(last_login : Time, countdown : Nat) : Bool {
-		let hasElapsed = has_countdown_elapsed(last_login, countdown);
+		let hasElapsed = has_duration_elapsed(last_login, countdown);
 
 		if (hasElapsed) {
 			return true;
@@ -113,44 +116,73 @@ actor {
 	};
 
 	public shared ({ caller }) func get_capsule(id : CapsuleId) : async Result.Result<Capsule, Err> {
-
-		// TODO: if capsule is locked do NOT return capsule info
-
 		switch (Map.get(capsules, thash, id)) {
 			case (?capsule) {
 				Debug.print(debug_show ("capsule.last_login: ", capsule.last_login));
 				Debug.print(debug_show ("capsule.countdown_minutes: ", capsule.countdown_minutes));
 
+				Debug.print(debug_show ("capsule.locked_start: ", capsule.locked_start));
+				Debug.print(debug_show ("capsule.locked_minutes: ", capsule.locked_minutes));
+
 				let is_terminated : Bool = check_owner_terminated(capsule.last_login, capsule.countdown_minutes);
+				let is_unlocked : Bool = has_duration_elapsed(capsule.locked_start, capsule.locked_minutes);
 
 				Debug.print(debug_show ("is_terminated: ", is_terminated));
+				Debug.print(debug_show ("is_unlocked: ", is_unlocked));
 
 				// (Terminated) execute only if owner terminated
 				if (capsule.kind == #Terminated and is_terminated == true) {
 					switch (Map.get(capsules, thash, id)) {
 						case (?capsule) {
 
-							let capsule_update_terminated : Capsule = {
+							let capsule_updated : Capsule = {
 								capsule with owner_is_terminated = true;
 							};
 
-							Map.set(capsules, thash, capsule.id, capsule_update_terminated);
+							Map.set(capsules, thash, capsule.id, capsule_updated);
 
-							return #ok(capsule_update_terminated);
+							return #ok(capsule_updated);
 						};
 						case (_) {};
 					};
 				};
 
+				// (Capsule) execute only if is_locked
+				if (capsule.kind == #Capsule and is_unlocked == false) {
+					switch (Map.get(capsules, thash, id)) {
+						case (?capsule) {
+
+							let capsule_updated : Capsule = {
+								capsule with is_unlocked = false;
+							};
+
+							Map.set(capsules, thash, capsule.id, capsule_updated);
+
+							let capsule_public : Capsule = {
+								capsule with is_unlocked = false;
+								files = [];
+								authorized = [];
+							};
+
+							return #ok(capsule_public);
+						};
+						case (_) {};
+					};
+				};
+
+				//TODO: add authorized to return
 				if (Principal.equal(caller, capsule.owner)) {
 					// update last login
-					let capsule_update_last_login : Capsule = {
+					let capsule_updated : Capsule = {
 						capsule with last_login = Time.now();
+						locked_start = 0;
+						locked_minutes = 0;
+						is_unlocked = true;
 					};
 
-					Map.set(capsules, thash, capsule.id, capsule_update_last_login);
+					Map.set(capsules, thash, capsule.id, capsule_updated);
 
-					return #ok(capsule);
+					return #ok(capsule_updated);
 				} else {
 					return #err(#NotOwner(true));
 				};
@@ -178,9 +210,12 @@ actor {
 					files = [];
 					authorized = [];
 					owner = caller;
+
 					owner_is_terminated = false;
 					countdown_minutes = 4320;
 					last_login = Time.now();
+
+					is_unlocked = true;
 					locked_minutes = 0;
 					locked_start = 0;
 				};
@@ -242,9 +277,12 @@ actor {
 
 		switch (Map.get(capsules, thash, capsule_id)) {
 			case (?capsule) {
-				if (Principal.equal(capsule.owner, caller)) {
 
-					//TODO: check if it is unlocked, if true reset `locked_start` to 0 & `locked_minutes` to 0
+				if (capsule.kind == #Terminated) {
+					return #err(#WrongKind(true));
+				};
+
+				if (Principal.equal(capsule.owner, caller)) {
 					let locked_minutes_updated : Nat = capsule.locked_minutes + minutes;
 
 					if (capsule.locked_start == 0) {
@@ -274,8 +312,16 @@ actor {
 	};
 
 	public shared ({ caller }) func update_countdown(id : CapsuleId, minutes : Nat) : async Result.Result<Capsule, Err> {
+		if (Principal.isAnonymous(caller)) {
+			return #err(#Anon(true));
+		};
+
 		switch (Map.get(capsules, thash, id)) {
 			case (?capsule) {
+
+				if (capsule.kind == #Capsule) {
+					return #err(#WrongKind(true));
+				};
 
 				if (Principal.equal(caller, capsule.owner)) {
 					// update countdown minutes
@@ -362,20 +408,23 @@ actor {
 	public shared ({ caller }) func encrypted_symmetric_key_for_caller(encryption_public_key : Blob, id : CapsuleId) : async Result.Result<Text, ErrVetKD> {
 		var principal_id : Principal = caller;
 
-		// (Terminated) execute only if owner terminated
 		switch (Map.get(capsules, thash, id)) {
 			case (?capsule) {
 				let is_terminated : Bool = check_owner_terminated(capsule.last_login, capsule.countdown_minutes);
+				let is_unlocked : Bool = has_duration_elapsed(capsule.locked_start, capsule.locked_minutes);
 
+				// (Terminated) execute only if owner terminated
 				if (capsule.kind == #Terminated and is_terminated == true) {
 					principal_id := capsule.owner;
+				};
+
+				// (Capsule) execute only if capsule locked
+				if (capsule.kind == #Capsule and is_unlocked == false) {
+					return #err(#Locked(true));
 				};
 			};
 			case (_) {};
 		};
-
-		// TODO: (Capsule) execute only if capsule is unlocked
-		// TODO: if capsule is locked do NOT return key
 
 		let { encrypted_key } = await vetkd_system_api.vetkd_encrypted_key({
 			derivation_id = Principal.toBlob(principal_id);
