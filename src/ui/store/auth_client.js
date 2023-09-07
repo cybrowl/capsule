@@ -53,30 +53,34 @@ export async function login(isProd, handleAuth) {
 
 // logout
 const logout_actor = async (actor_name, actor) => {
-	const authClient = await AuthClient.create();
+	try {
+		auth_client = await AuthClient.create();
 
-	const isAuthenticated = await authClient.isAuthenticated();
-
-	if (!isAuthenticated) {
 		actor.update(() => ({
 			loggedIn: false,
 			actor: createActor({
 				actor_name,
-				identity: authClient.getIdentity()
+				identity: auth_client.getIdentity()
 			})
 		}));
+	} catch (error) {
+		console.error(`Failed to log out actor ${actor_name}:`, error);
 	}
 };
 
 export const auth_logout_all = async () => {
-	await auth_client.logout();
+	try {
+		await auth_client.logout();
 
-	const actors_list = [
-		{ name: 'capsule', actor: actor_capsule },
-		{ name: 'file_storage', actor: actor_file_storage }
-	];
+		const actors_list = [
+			{ name: 'capsule', actor: actor_capsule },
+			{ name: 'file_storage', actor: actor_file_storage }
+		];
 
-	actors_list.forEach(({ name, actor }) => {
-		logout_actor(name, actor);
-	});
+		for (const { name, actor } of actors_list) {
+			await logout_actor(name, actor);
+		}
+	} catch (error) {
+		console.error('Error during logout:', error);
+	}
 };
