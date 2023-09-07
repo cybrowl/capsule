@@ -33,13 +33,15 @@
 	let views = {
 		home_selected: true,
 		time_selected: false,
-		settings_selected: false
+		settings_selected: false,
+		locked_selected: false
 	};
 
 	const views_deselect = {
 		home_selected: false,
 		time_selected: false,
-		settings_selected: false
+		settings_selected: false,
+		locked_selected: false
 	};
 
 	let time_input = 0;
@@ -60,7 +62,7 @@
 		// get owner principal
 		let { ok: capsule, err: error } = await $actor_capsule.actor.get_capsule(capsule_id);
 
-		// if capsule doesn't exist, then return
+		// capsule doesn't exist
 		if (error && error.CapsuleNotFound) {
 			is_loading = false;
 			is_loading_msg = '';
@@ -68,9 +70,30 @@
 			return null;
 		}
 
+		// capsule locked state
+		if (capsule && capsule.is_unlocked == false) {
+			is_loading = false;
+			is_loading_msg = '';
+
+			has_capsule = true;
+			capsule_ref = capsule;
+
+			views = {
+				...views_deselect,
+				locked_selected: true
+			};
+
+			return null;
+		}
+
 		if (capsule) {
 			has_capsule = true;
 			capsule_ref = capsule;
+
+			views = {
+				...views_deselect,
+				home_selected: true
+			};
 
 			console.group('%cCapsule Information', 'color: blue; font-weight: bold;');
 			console.log('%cCapsule:', 'color: green;', capsule);
@@ -300,7 +323,7 @@
 
 	<!-- Right column with the files table -->
 	<div class="col-span-8 grid grid-rows-5 bg-gray-950">
-		<!-- Login Screen -->
+		<!-- Login View -->
 		{#if $actor_capsule.loggedIn === false}
 			<div class="row-span-5 flex justify-center items-center">
 				<button
@@ -312,7 +335,7 @@
 			</div>
 		{/if}
 
-		<!-- Loading Screen -->
+		<!-- Loading View -->
 		{#if is_loading === true && $actor_capsule.loggedIn}
 			<div class="row-span-5 bg-gray-950 flex justify-center items-center flex-col">
 				<JellyFish />
@@ -321,7 +344,7 @@
 		{/if}
 
 		{#if is_loading === false && $actor_capsule.loggedIn}
-			<!-- Create Account Screen -->
+			<!-- Create Account View -->
 			{#if has_capsule === false}
 				<div class="row-span-5 flex justify-center items-center space-x-6 mx-10">
 					<div
@@ -364,14 +387,15 @@
 				</div>
 			{/if}
 
-			<!-- File List Screen -->
+			<!-- Views -->
 			{#if has_capsule === true}
 				<div class="row-span-5 relative">
 					<div class="overflow-auto max-h-[100vh]">
 						<!-- Actions Bar -->
 						<div class="actions p-4 flex justify-between items-center">
 							<button
-								class="bg-zinc-900 hover:bg-zinc-700 text-white font-bold py-2 px-4 rounded"
+								class="bg-zinc-900 hover:bg-zinc-700 text-white font-bold py-2 px-4 rounded
+								{capsule_ref.is_unlocked == false ? 'opacity-0 pointer-events-none' : ''}"
 								on:click={triggerFileSelectionBrowser}
 							>
 								Upload
@@ -381,12 +405,20 @@
 								<Icon
 									name="home"
 									on:click={() => {
-										views = {
-											...views_deselect,
-											home_selected: true
-										};
+										if (capsule_ref.is_unlocked == true) {
+											views = {
+												...views_deselect,
+												home_selected: true
+											};
+										} else {
+											views = {
+												...views_deselect,
+												locked_selected: true
+											};
+										}
 									}}
 								/>
+
 								<Icon
 									name="time"
 									on:click={() => {
@@ -408,6 +440,15 @@
 								/>
 							</span>
 						</div>
+
+						<!-- Locked View -->
+						{#if views.locked_selected === true}
+							<div class="flex justify-center items-center min-h-screen bg-gray-950">
+								<div class="text-white bg-gray-800 rounded-lg shadow-md p-10">
+									<h1 class="text-4xl font-bold text-center">Capsule is Locked</h1>
+								</div>
+							</div>
+						{/if}
 
 						<!-- Home View -->
 						{#if views.home_selected === true}
