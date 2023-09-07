@@ -552,9 +552,15 @@
 								<div class="mb-10">
 									{#if 'Capsule' in capsule_ref?.kind}
 										<p><strong>Capsule Kind:</strong> Identity Time Capsule</p>
+										<img src="time_capsule.png" alt="Capsule Icon" class="my-4 w-16 h-16" />
 									{/if}
 									{#if 'Terminated' in capsule_ref?.kind}
 										<p><strong>Capsule Kind:</strong> Terminated Time Capsule</p>
+										<img
+											src="dead_bunny.png"
+											alt="Switch Icon"
+											class="my-4 w-16 h-16 bg-gray-700"
+										/>
 									{/if}
 								</div>
 
