@@ -118,17 +118,8 @@ actor {
 	public shared ({ caller }) func get_capsule(id : CapsuleId) : async Result.Result<Capsule, Err> {
 		switch (Map.get(capsules, thash, id)) {
 			case (?capsule) {
-				Debug.print(debug_show ("capsule.last_login: ", capsule.last_login));
-				Debug.print(debug_show ("capsule.countdown_minutes: ", capsule.countdown_minutes));
-
-				Debug.print(debug_show ("capsule.locked_start: ", capsule.locked_start));
-				Debug.print(debug_show ("capsule.locked_minutes: ", capsule.locked_minutes));
-
 				let is_terminated : Bool = check_owner_terminated(capsule.last_login, capsule.countdown_minutes);
 				let is_unlocked : Bool = has_duration_elapsed(capsule.locked_start, capsule.locked_minutes);
-
-				Debug.print(debug_show ("is_terminated: ", is_terminated));
-				Debug.print(debug_show ("is_unlocked: ", is_unlocked));
 
 				// (Terminated) execute only if owner terminated
 				if (capsule.kind == #Terminated and is_terminated == true) {
