@@ -34,14 +34,16 @@
 		home_selected: true,
 		time_selected: false,
 		settings_selected: false,
-		locked_selected: false
+		locked_selected: false,
+		terminated_selected: false
 	};
 
 	const views_deselect = {
 		home_selected: false,
 		time_selected: false,
 		settings_selected: false,
-		locked_selected: false
+		locked_selected: false,
+		terminated_selected: false
 	};
 
 	let time_input = 0;
@@ -90,10 +92,18 @@
 			has_capsule = true;
 			capsule_ref = capsule;
 
-			views = {
-				...views_deselect,
-				home_selected: true
-			};
+			// terminated
+			if (capsule.owner_is_terminated == true) {
+				views = {
+					...views_deselect,
+					terminated_selected: true
+				};
+			} else {
+				views = {
+					...views_deselect,
+					home_selected: true
+				};
+			}
 
 			console.group('%cCapsule Information', 'color: blue; font-weight: bold;');
 			console.log('%cCapsule:', 'color: green;', capsule);
@@ -106,10 +116,14 @@
 
 			await cryptoService.init_caller(capsule.id, owner_principal);
 
-			// NOTE: Another way of doing encryption based on password
-			// await $crypto_service.init_pw('ocean');
+			if ($actor_capsule.loggedIn === true && capsule.owner_is_terminated == false) {
+				let { ok: capsule } = await $actor_capsule.actor.get_capsule(capsule_id);
 
-			if ($actor_capsule.loggedIn === true) {
+				files = capsule.files;
+
+				is_loading = false;
+				is_loading_msg = '';
+			} else {
 				let { ok: capsule } = await $actor_capsule.actor.get_capsule(capsule_id);
 
 				files = capsule.files;
@@ -323,8 +337,16 @@
 
 	<!-- Right column with the files table -->
 	<div class="col-span-8 grid grid-rows-5 bg-gray-950">
+		<!-- Loading View -->
+		{#if is_loading === true}
+			<div class="row-span-5 bg-gray-950 flex justify-center items-center flex-col">
+				<JellyFish />
+				<p class="text-white mt-4">{is_loading_msg}</p>
+			</div>
+		{/if}
+
 		<!-- Login View -->
-		{#if $actor_capsule.loggedIn === false}
+		{#if is_loading === false && $actor_capsule.loggedIn === false && views.terminated_selected === false}
 			<div class="row-span-5 flex justify-center items-center">
 				<button
 					class="bg-zinc-300 hover:bg-stone-100 text-violet-500 font-bold py-4 px-6 rounded"
@@ -335,15 +357,41 @@
 			</div>
 		{/if}
 
-		<!-- Loading View -->
-		{#if is_loading === true && $actor_capsule.loggedIn}
-			<div class="row-span-5 bg-gray-950 flex justify-center items-center flex-col">
-				<JellyFish />
-				<p class="text-white mt-4">{is_loading_msg}</p>
-			</div>
+		<!-- Terminated View -->
+		{#if is_loading === false && views.terminated_selected === true}
+			<table class="min-w-full text-white">
+				<thead>
+					<tr>
+						<th class="py-2 px-4 border-b border-zinc-900 text-left">Filename</th>
+						<th class="py-2 px-4 border-b border-zinc-900 text-left">Created</th>
+						<th class="py-2 px-4 border-b border-zinc-900 text-left">Content Type</th>
+					</tr>
+				</thead>
+				<tbody>
+					{#each files as { filename, created, content_type, url }}
+						<tr>
+							<td class="py-2 px-4 border-b border-zinc-900">{filename}</td>
+							<td class="py-2 px-4 border-b border-zinc-900"
+								>{DateTime.fromMillis(Number(created) / 1000000).toLocaleString(
+									DateTime.DATETIME_MED
+								)}</td
+							>
+							<td class="py-2 px-4 border-b border-zinc-900">{content_type}</td>
+							<td class="py-2 px-4 border-b border-zinc-900">
+								<button
+									class="bg-zinc-900 hover:bg-zinc-700 text-white font-bold py-2 px-4 rounded"
+									on:click={() => decryptAndDownloadFile(url, filename)}
+								>
+									Download
+								</button>
+							</td>
+						</tr>
+					{/each}
+				</tbody>
+			</table>
 		{/if}
 
-		{#if is_loading === false && $actor_capsule.loggedIn}
+		{#if is_loading === false && $actor_capsule.loggedIn && views.terminated_selected === false}
 			<!-- Create Account View -->
 			{#if has_capsule === false}
 				<div class="row-span-5 flex justify-center items-center space-x-6 mx-10">
@@ -600,7 +648,7 @@
 										<img
 											src="dead_bunny.png"
 											alt="Switch Icon"
-											class="my-4 w-16 h-16 bg-gray-700"
+											class="my-4 w-16 h-16 bg-gray-700 rounded-full"
 										/>
 									{/if}
 								</div>
