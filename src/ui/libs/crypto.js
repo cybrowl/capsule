@@ -51,7 +51,13 @@ export class CryptoService {
 		const seed = window.crypto.getRandomValues(new Uint8Array(32));
 		const tsk = new vetkd.TransportSecretKey(seed);
 
-		const ek_tuple = await this.actor.encrypted_symmetric_key_by_time(tsk.public_key(), [minutes]);
+		let ek_tuple;
+
+		if (minutes) {
+			ek_tuple = await this.actor.encrypted_symmetric_key_by_time(tsk.public_key(), [minutes]);
+		} else {
+			ek_tuple = await this.actor.encrypted_symmetric_key_by_time(tsk.public_key(), []);
+		}
 
 		const ek_bytes_hex = ek_tuple[0];
 		const derived_id = ek_tuple[1];

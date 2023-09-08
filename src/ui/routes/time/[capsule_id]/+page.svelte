@@ -73,16 +73,11 @@
 			capsule_ref = capsule;
 		}
 
-		const minutes = 10;
-
 		// vetkey init wasm
 		await init_vetkd_wasm();
 
 		const cryptoService = new CryptoService($actor_capsule.actor);
 		crypto_service.set(cryptoService);
-		const response = await cryptoService.init_time(minutes);
-
-		console.log('response: ', response);
 
 		is_loading = false;
 		is_loading_msg = '';
@@ -164,6 +159,9 @@
 
 		fetchFile(url)
 			.then(async (encrypted_file_buffer) => {
+				const response = await $crypto_service.init_time();
+				console.log('response: ', response);
+
 				const decrypted_data = await decryptInChunks(encrypted_file_buffer);
 				downloadFile(decrypted_data, filename);
 
@@ -179,10 +177,14 @@
 	}
 
 	async function handleUploadClick(e) {
-		let file_storage_lib = new AssetManager($actor_file_storage.actor, $crypto_service);
-
 		is_loading = true;
 		is_loading_msg = 'Encrypting File and Storing...';
+
+		const minutes = 10;
+		const response = await $crypto_service.init_time(minutes);
+		console.log('response: ', response);
+
+		let file_storage_lib = new AssetManager($actor_file_storage.actor, $crypto_service);
 
 		const file = e.target.files[0];
 		const file_name = get(file, 'name', '');
