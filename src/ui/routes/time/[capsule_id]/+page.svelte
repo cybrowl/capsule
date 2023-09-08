@@ -36,6 +36,8 @@
 		locked_selected: false
 	};
 
+	let minutes_locked = 10;
+
 	onMount(async () => {
 		is_loading = true;
 		is_loading_msg = 'Setting Up Encryption';
@@ -180,8 +182,7 @@
 		is_loading = true;
 		is_loading_msg = 'Encrypting File and Storing...';
 
-		const minutes = 10;
-		const response = await $crypto_service.init_time(minutes);
+		const response = await $crypto_service.init_time(minutes_locked);
 		console.log('response: ', response);
 
 		let file_storage_lib = new AssetManager($actor_file_storage.actor, $crypto_service);
@@ -199,10 +200,8 @@
 				filename: file_name
 			});
 
-			const { ok: added_file, err: err_adding_file } = await $actor_capsule.actor.add_file(
-				capsule_id,
-				asset_id
-			);
+			const { ok: added_file, err: err_adding_file } =
+				await $actor_capsule.actor.add_file_with_time(capsule_id, asset_id, minutes_locked);
 
 			let { ok: capsule } = await $actor_capsule.actor.get_capsule(capsule_id);
 			capsule_ref = capsule;
@@ -244,30 +243,40 @@
 					</button>
 
 					<span class="flex flex-row gap-x-4">
-						<Icon
-							name="home"
-							on:click={() => {
-								if (capsule_ref.is_unlocked == true) {
-									views = {
-										...views_deselect,
-										home_selected: true
-									};
-								} else {
-									views = {
-										...views_deselect,
-										locked_selected: true
-									};
+						<input
+							id="numberInput"
+							type="number"
+							class="bg-gray-800 p-2 w-1/2 rounded text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-600"
+							bind:value={minutes_locked}
+							on:keydown={(event) => {
+								if (
+									![
+										'0',
+										'1',
+										'2',
+										'3',
+										'4',
+										'5',
+										'6',
+										'7',
+										'8',
+										'9',
+										'Backspace',
+										'ArrowLeft',
+										'ArrowRight',
+										'Tab',
+										'Delete'
+									].includes(event.key)
+								) {
+									event.preventDefault();
 								}
 							}}
-						/>
-
-						<Icon
-							name="time"
-							on:click={() => {
-								views = {
-									...views_deselect,
-									time_selected: true
-								};
+							on:input={(event) => {
+								if (/^\d+$/.test(event.target.value) || event.target.value === '') {
+									minutes_locked = Number(event.target.value);
+								} else {
+									event.target.value = minutes_locked;
+								}
 							}}
 						/>
 					</span>
@@ -279,11 +288,12 @@
 							<tr>
 								<th class="py-2 px-4 border-b border-zinc-900 text-left">Filename</th>
 								<th class="py-2 px-4 border-b border-zinc-900 text-left">Created</th>
+								<th class="py-2 px-4 border-b border-zinc-900 text-left">Locked Minutes</th>
 								<th class="py-2 px-4 border-b border-zinc-900 text-left">Content Type</th>
 							</tr>
 						</thead>
 						<tbody>
-							{#each capsule_ref.files as { filename, created, content_type, url }}
+							{#each capsule_ref.files as { filename, created, content_type, locked_minutes, url }}
 								<tr>
 									<td class="py-2 px-4 border-b border-zinc-900">{filename}</td>
 									<td class="py-2 px-4 border-b border-zinc-900"
@@ -291,6 +301,7 @@
 											DateTime.DATETIME_MED
 										)}</td
 									>
+									<td class="py-2 px-4 border-b border-zinc-900">{locked_minutes}</td>
 									<td class="py-2 px-4 border-b border-zinc-900">{content_type}</td>
 									<td class="py-2 px-4 border-b border-zinc-900">
 										<button

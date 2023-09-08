@@ -29,6 +29,7 @@ actor {
 	public type Asset = {
 		created : Int;
 		content_type : Text;
+		locked_minutes : Nat;
 		filename : Text; // filename is public, not PII
 		url : Text; // url is public but encrypted data
 	};
@@ -254,9 +255,9 @@ actor {
 	};
 
 	public shared ({ caller }) func add_file(capsule_id : CapsuleId, asset_id : Asset_ID) : async Result.Result<Ok, Err> {
-		// if (Principal.isAnonymous(caller)) {
-		//     return #err(#Anon(true));
-		// };
+		if (Principal.isAnonymous(caller)) {
+			return #err(#Anon(true));
+		};
 
 		switch (await FileStorage.get(asset_id)) {
 			case (#err asset_err) {
@@ -270,6 +271,7 @@ actor {
 								created = asset.created;
 								content_type = asset.content_type;
 								filename = asset.filename;
+								locked_minutes = 0;
 								url = asset.url;
 							};
 
@@ -290,6 +292,41 @@ actor {
 					};
 				} else {
 					return #err(#NotOwner(true));
+				};
+			};
+		};
+	};
+
+	public shared ({ caller }) func add_file_with_time(capsule_id : CapsuleId, asset_id : Asset_ID, minutes : Nat) : async Result.Result<Ok, Err> {
+		switch (await FileStorage.get(asset_id)) {
+			case (#err asset_err) {
+				return #err(#AssetNotFound(true));
+			};
+			case (#ok asset) {
+				switch (Map.get(capsules, thash, capsule_id)) {
+					case (?capsule) {
+						let file : Asset = {
+							created = asset.created;
+							content_type = asset.content_type;
+							filename = asset.filename;
+							locked_minutes = minutes;
+							url = asset.url;
+						};
+
+						var files_updated : Buffer.Buffer<Asset> = Buffer.fromArray(capsule.files);
+						files_updated.add(file);
+
+						let capsule_updated : Capsule = {
+							capsule with files = Buffer.toArray(files_updated);
+						};
+
+						ignore Map.put(capsules, thash, capsule_id, capsule_updated);
+
+						return #ok(#AddedFile(true));
+					};
+					case (_) {
+						return #err(#CapsuleNotFound(true));
+					};
 				};
 			};
 		};
