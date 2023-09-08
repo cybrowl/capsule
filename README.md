@@ -62,7 +62,7 @@ SATOSHI_IDENTITY=
 ### Future
 
 - [ ] Scalable Storage
-- [ ] Sharing with others
+- [ ] Sharing with others via principal
 - [ ] In Browser Streaming and Viewing of content
 
 ## License
