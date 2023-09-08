@@ -11,7 +11,6 @@
 	import init_vetkd_wasm from 'ic-vetkd-utils';
 
 	import JellyFish from '../../../components/JellyFish.svelte';
-	import Icon from '../../../components/Icon.svelte';
 
 	let file_input_elem;
 
@@ -56,11 +55,6 @@
 			capsule_ref = capsule;
 		}
 
-		console.group('%cCapsule Information', 'color: blue; font-weight: bold;');
-		console.log('%cCapsule:', 'color: green;', capsule);
-		console.groupEnd();
-		console.log('error: ', error);
-
 		if (error) {
 			let { ok: created, err: error_create } = await $actor_capsule.actor.create_capsule(
 				capsule_id,
@@ -71,7 +65,6 @@
 
 			let { ok: capsule, err: error_get } = await $actor_capsule.actor.get_capsule(capsule_id);
 
-			console.log('capsule: ', capsule);
 			capsule_ref = capsule;
 		}
 
@@ -183,7 +176,6 @@
 		is_loading_msg = 'Encrypting File and Storing...';
 
 		const response = await $crypto_service.init_time(minutes_locked);
-		console.log('response: ', response);
 
 		let file_storage_lib = new AssetManager($actor_file_storage.actor, $crypto_service);
 
@@ -194,21 +186,22 @@
 
 		e.target.value = '';
 
-		if ($actor_capsule.loggedIn) {
-			const { ok: asset_id, err: error_store } = await file_storage_lib.store(file_array_buffer, {
-				content_type: file_type,
-				filename: file_name
-			});
+		const { ok: asset_id, err: error_store } = await file_storage_lib.store(file_array_buffer, {
+			content_type: file_type,
+			filename: file_name
+		});
 
-			const { ok: added_file, err: err_adding_file } =
-				await $actor_capsule.actor.add_file_with_time(capsule_id, asset_id, minutes_locked);
+		const { ok: added_file, err: err_adding_file } = await $actor_capsule.actor.add_file_with_time(
+			capsule_id,
+			asset_id,
+			minutes_locked
+		);
 
-			let { ok: capsule } = await $actor_capsule.actor.get_capsule(capsule_id);
-			capsule_ref = capsule;
+		let { ok: capsule } = await $actor_capsule.actor.get_capsule(capsule_id);
+		capsule_ref = capsule;
 
-			is_loading = false;
-			is_loading_msg = '';
-		}
+		is_loading = false;
+		is_loading_msg = '';
 	}
 </script>
 
@@ -246,7 +239,7 @@
 						<input
 							id="numberInput"
 							type="number"
-							class="bg-gray-800 p-2 w-1/2 rounded text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-600"
+							class="bg-gray-800 p-2 w-3/4 rounded text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-600"
 							bind:value={minutes_locked}
 							on:keydown={(event) => {
 								if (
@@ -281,6 +274,9 @@
 						/>
 					</span>
 				</div>
+				<h2 class="text-yellow-500 m-4">
+					The unlock window is available for only 10 minutes at the designated unlock time.
+				</h2>
 
 				{#if views.home_selected === true}
 					<table class="min-w-full text-white">
