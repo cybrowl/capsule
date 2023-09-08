@@ -39,3 +39,32 @@ MOTOKO_IDENTITY=
 ZOOKO_IDENTITY=
 SATOSHI_IDENTITY=
 ```
+
+## Roadmap
+
+### MVP
+
+- [x] Login View
+- [x] Account Creation View
+- [x] Home View / Auth
+- [x] Home View / No Auth
+- [x] Settings View
+- [x] Timer View
+
+- [x] File Encryption & Upload
+- [x] File Decryption & Download
+- [x] Access when Owner Terminated by Anon
+- [x] Access when Capsule Unlocked
+- [x] Deny when Capsule locked
+
+- [x] Integration Tests
+
+### Future
+
+- [ ] Scalable Storage
+- [ ] Sharing with others
+- [ ] In Browser Streaming and Viewing of content
+
+## License
+
+This project is licensed under the MIT license, see LICENSE.md for details.
