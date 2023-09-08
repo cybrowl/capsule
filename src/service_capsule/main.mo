@@ -71,6 +71,17 @@ actor {
 	private var capsules = Map.new<CapsuleId, Capsule>(thash);
 	private var capsule_owner = Map.new<Principal, CapsuleId>(phash);
 
+	private func minutes_to_nanoseconds(minutes : Nat) : Nat {
+		return 60_000_000_000 * minutes;
+	};
+
+	private func round_to_nearest_ten_minutes(t : Time) : Time {
+		// 10 minutes * 60 seconds * 1_000_000_000 nanoseconds
+		let nanoseconds_per_ten_minutes = 600_000_000_000;
+
+		return (t / nanoseconds_per_ten_minutes) * nanoseconds_per_ten_minutes;
+	};
+
 	private func time_elapsed_since(start_time : Time) : Int {
 		let now = Time.now();
 		let difference = now - start_time;
@@ -427,49 +438,25 @@ actor {
 		return #ok(Hex.encode(Blob.toArray(encrypted_key)));
 	};
 
-	// public shared func encrypted_symmetric_key_by_pass(password : Text, encryption_public_key : Blob) : async Text {
-	//     let pass : Blob = Text.encodeUtf8(password);
+	public shared func encrypted_symmetric_key_by_time(encryption_public_key : Blob, minutes : ?Nat) : async Text {
+		var time : Time = round_to_nearest_ten_minutes(Time.now());
 
-	//     let { encrypted_key } = await vetkd_system_api.vetkd_encrypted_key({
-	//         derivation_id = pass;
-	//         public_key_derivation_path = Array.make(Text.encodeUtf8("symmetric_key"));
-	//         key_id = { curve = #bls12_381; name = "test_key_1" };
-	//         encryption_public_key;
-	//     });
+		switch (minutes) {
+			case (null) {};
+			case (?minutes) {
+				time := round_to_nearest_ten_minutes(Time.now() + minutes_to_nanoseconds(minutes));
+			};
+		};
 
-	//     Hex.encode(Blob.toArray(encrypted_key));
-	// };
+		let time_encoded : Blob = Text.encodeUtf8(debug_show (time));
 
-	// public shared func app_vetkd_public_key(derivation_path : [Blob]) : async Text {
-	//     let { public_key } = await vetkd_system_api.vetkd_public_key({
-	//         canister_id = null;
-	//         derivation_path;
-	//         key_id = { curve = #bls12_381; name = "test_key_1" };
-	//     });
+		let { encrypted_key } = await vetkd_system_api.vetkd_encrypted_key({
+			derivation_id = time_encoded;
+			public_key_derivation_path = Array.make(Text.encodeUtf8("symmetric_key"));
+			key_id = { curve = #bls12_381; name = "test_key_1" };
+			encryption_public_key;
+		});
 
-	//     Hex.encode(Blob.toArray(public_key));
-	// };
-
-	// ibe
-	// public shared func ibe_encryption_key() : async Text {
-	//     let { public_key } = await vetkd_system_api.vetkd_public_key({
-	//         canister_id = null;
-	//         derivation_path = Array.make(Text.encodeUtf8("ibe_encryption"));
-	//         key_id = { curve = #bls12_381; name = "test_key_1" };
-	//     });
-
-	//     Hex.encode(Blob.toArray(public_key));
-	// };
-
-	// public shared ({ caller }) func encrypted_ibe_decryption_key_for_caller(encryption_public_key : Blob) : async Text {
-
-	//     let { encrypted_key } = await vetkd_system_api.vetkd_encrypted_key({
-	//         derivation_id = Principal.toBlob(caller);
-	//         public_key_derivation_path = Array.make(Text.encodeUtf8("ibe_encryption"));
-	//         key_id = { curve = #bls12_381; name = "test_key_1" };
-	//         encryption_public_key;
-	//     });
-
-	//     Hex.encode(Blob.toArray(encrypted_key));
-	// };
+		Hex.encode(Blob.toArray(encrypted_key));
+	};
 };
