@@ -47,25 +47,21 @@ export class CryptoService {
 		return 'key created';
 	}
 
-	async init_pw(password) {
+	async init_time(minutes) {
 		const seed = window.crypto.getRandomValues(new Uint8Array(32));
 		const tsk = new vetkd.TransportSecretKey(seed);
 
-		if (password === undefined) {
-			throw new Error('null password!');
-		}
+		const ek_tuple = await this.actor.encrypted_symmetric_key_by_time(tsk.public_key(), [minutes]);
 
-		const ek_bytes_hex = await this.actor.encrypted_symmetric_key_by_pass(
-			password,
-			tsk.public_key()
-		);
+		const ek_bytes_hex = ek_tuple[0];
+		const derived_id = ek_tuple[1];
 
 		const pk_bytes_hex = await this.actor.symmetric_key_verification_key();
 
 		const aes_256_gcm_key_raw = tsk.decrypt_and_hash(
 			hex_decode(ek_bytes_hex),
 			hex_decode(pk_bytes_hex),
-			new TextEncoder().encode(password),
+			derived_id,
 			32,
 			new TextEncoder().encode('aes-256-gcm')
 		);

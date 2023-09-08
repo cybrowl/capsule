@@ -197,6 +197,29 @@ actor {
 	};
 
 	public shared ({ caller }) func create_capsule(id : CapsuleId, kind : Kind) : async Result.Result<Ok, Err> {
+		if (kind == #TimeEncrypt) {
+			let capsule : Capsule = {
+				id = id;
+				kind = kind;
+				files = [];
+				authorized = [];
+				owner = caller;
+
+				owner_is_terminated = false;
+				countdown_minutes = 0;
+				last_login = Time.now();
+
+				is_unlocked = true;
+				locked_minutes = 0;
+				locked_start = 0;
+			};
+
+			ignore Map.put(capsules, thash, id, capsule);
+			ignore Map.put(capsule_owner, phash, caller, id);
+
+			return #ok(#CreatedCapsule(true));
+		};
+
 		if (Principal.isAnonymous(caller)) {
 			return #err(#Anon(true));
 		};
@@ -439,7 +462,7 @@ actor {
 	};
 
 	// time encryption
-	public shared func encrypted_symmetric_key_by_time(encryption_public_key : Blob, minutes : ?Nat) : async Text {
+	public shared func encrypted_symmetric_key_by_time(encryption_public_key : Blob, minutes : ?Nat) : async (Text, Blob) {
 		var time : Time = round_to_nearest_ten_minutes(Time.now());
 
 		switch (minutes) {
@@ -458,6 +481,6 @@ actor {
 			encryption_public_key;
 		});
 
-		Hex.encode(Blob.toArray(encrypted_key));
+		(Hex.encode(Blob.toArray(encrypted_key)), time_encoded);
 	};
 };
