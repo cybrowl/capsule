@@ -29,6 +29,7 @@
 
 	let is_loading = false;
 	let is_loading_msg = '';
+	let capsule_login = false;
 
 	let views = {
 		home_selected: true,
@@ -50,29 +51,51 @@
 
 	onMount(async () => {
 		is_loading = true;
-		is_loading_msg = 'Setting Up Encryption';
+		is_loading_msg = 'Checking if Authorized';
 
 		capsule_id = $page.params.capsule_id;
 
+		// auth actors
 		await init_auth();
-
 		await auth_actors.capsule();
 		await auth_actors.file_storage();
-
-		await init_vetkd_wasm();
 
 		// get owner principal
 		let { ok: capsule, err: error } = await $actor_capsule.actor.get_capsule(capsule_id);
 
-		// capsule doesn't exist
+		console.group('%cCapsule Information', 'color: blue; font-weight: bold;');
+		console.log('%cCapsule:', 'color: green;', capsule);
+		console.groupEnd();
+		console.log('error: ', error);
+
+		// vetkey init wasm
+		await init_vetkd_wasm();
+
+		//TODO: check if should show login button
+
+		// capsule doesn't exist / create an account
+		// no encryption / decryption
 		if (error && error.CapsuleNotFound) {
 			is_loading = false;
 			is_loading_msg = '';
+
+			if ($actor_capsule.loggedIn === false) {
+				capsule_login = true;
+			}
+
+			return null;
+		}
+
+		if (error && error.NotOwner) {
+			is_loading = false;
+			is_loading_msg = '';
+			capsule_login = true;
 
 			return null;
 		}
 
 		// capsule locked state
+		// no decryption / encryption
 		if (capsule && capsule.is_unlocked == false) {
 			is_loading = false;
 			is_loading_msg = '';
@@ -88,26 +111,22 @@
 			return null;
 		}
 
-		if (capsule) {
+		// capsule public / owner terminated
+		// anon caller
+		// decryption
+		if ($actor_capsule.loggedIn === false && capsule.owner_is_terminated == true) {
+			is_loading_msg = 'Owner Terminated';
+
+			views = {
+				...views_deselect,
+				terminated_selected: true
+			};
+
 			has_capsule = true;
 			capsule_ref = capsule;
+			files = capsule.files;
 
-			// terminated
-			if (capsule.owner_is_terminated == true) {
-				views = {
-					...views_deselect,
-					terminated_selected: true
-				};
-			} else {
-				views = {
-					...views_deselect,
-					home_selected: true
-				};
-			}
-
-			console.group('%cCapsule Information', 'color: blue; font-weight: bold;');
-			console.log('%cCapsule:', 'color: green;', capsule);
-			console.groupEnd();
+			is_loading_msg = 'Setting Up Encryption';
 
 			const owner_principal = capsule.owner._arr;
 
@@ -116,21 +135,32 @@
 
 			await cryptoService.init_caller(capsule.id, owner_principal);
 
-			if ($actor_capsule.loggedIn === true && capsule.owner_is_terminated == false) {
-				let { ok: capsule } = await $actor_capsule.actor.get_capsule(capsule_id);
+			is_loading = false;
+			is_loading_msg = '';
+		}
 
-				files = capsule.files;
+		// capsule & terminated unlocked
+		// auth caller
+		// encryption and decryption
+		if ($actor_capsule.loggedIn) {
+			is_loading_msg = 'Setting Up Encryption';
 
-				is_loading = false;
-				is_loading_msg = '';
-			} else {
-				let { ok: capsule } = await $actor_capsule.actor.get_capsule(capsule_id);
+			views = {
+				...views_deselect,
+				home_selected: true
+			};
 
-				files = capsule.files;
+			has_capsule = true;
+			capsule_ref = capsule;
+			files = capsule.files;
 
-				is_loading = false;
-				is_loading_msg = '';
-			}
+			const owner_principal = capsule.owner._arr;
+			const cryptoService = new CryptoService($actor_capsule.actor);
+			crypto_service.set(cryptoService);
+			await cryptoService.init_caller(capsule.id, owner_principal);
+
+			is_loading = false;
+			is_loading_msg = '';
 		}
 	});
 
@@ -346,7 +376,7 @@
 		{/if}
 
 		<!-- Login View -->
-		{#if is_loading === false && $actor_capsule.loggedIn === false && views.terminated_selected === false}
+		{#if is_loading === false && capsule_login === true}
 			<div class="row-span-5 flex justify-center items-center">
 				<button
 					class="bg-zinc-300 hover:bg-stone-100 text-violet-500 font-bold py-4 px-6 rounded"
