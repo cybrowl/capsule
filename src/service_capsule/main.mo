@@ -254,9 +254,9 @@ actor {
 	};
 
 	public shared ({ caller }) func add_file(capsule_id : CapsuleId, asset_id : Asset_ID) : async Result.Result<Ok, Err> {
-		if (Principal.isAnonymous(caller)) {
-			return #err(#Anon(true));
-		};
+		// if (Principal.isAnonymous(caller)) {
+		//     return #err(#Anon(true));
+		// };
 
 		switch (await FileStorage.get(asset_id)) {
 			case (#err asset_err) {
