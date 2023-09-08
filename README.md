@@ -1,6 +1,6 @@
 # capsule
 
-Description:
+**Description:**
 
 A capsule/storage to share files with others.
 
