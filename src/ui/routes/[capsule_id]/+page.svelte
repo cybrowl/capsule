@@ -87,6 +87,7 @@
 		}
 
 		if (error && error.NotOwner) {
+			has_capsule = false;
 			is_loading = false;
 			is_loading_msg = '';
 			capsule_login = true;
@@ -169,15 +170,14 @@
 	}
 
 	async function handleAuth() {
+		is_loading = true;
+		is_loading_msg = 'Authorizing';
+
 		await auth_actors.capsule();
 
 		try {
 			if ($actor_capsule.loggedIn) {
-				let { ok: capsule, err: error } = await $actor_capsule.actor.get_capsule(capsule_id);
-
-				if (capsule) {
-					window.location.reload();
-				}
+				window.location.reload();
 			}
 		} catch (error) {
 			console.log('handleAuth - error: ', error);
@@ -421,281 +421,279 @@
 			</table>
 		{/if}
 
-		{#if is_loading === false && $actor_capsule.loggedIn && views.terminated_selected === false}
-			<!-- Create Account View -->
-			{#if has_capsule === false}
-				<div class="row-span-5 flex justify-center items-center space-x-6 mx-10">
-					<div
-						role="button"
-						class="card transition-shadow hover:shadow-lg cursor-pointer"
-						on:click={() => handleAccountCreation('Capsule')}
-						on:keydown={(event) => {
-							if (event.key === 'Enter') handleAccountCreation('Capsule');
-						}}
-						tabindex="0"
-					>
-						<div class="bg-zinc-900 hover:bg-zinc-700 rounded p-6 flex flex-col items-center">
-							<img src="time_capsule.png" alt="Capsule Icon" class="mb-4 w-16 h-16" />
-							<span class="text-gray-300 font-bold">Create Identity Time Capsule</span>
-							<p class="text-gray-300">
-								Preserve your memories, moments, or files in a Time Capsule, sealed today and
-								intended for discovery or reflection in the future.
-							</p>
-						</div>
-					</div>
-
-					<div
-						role="button"
-						class="card transition-shadow hover:shadow-lg cursor-pointer"
-						on:click={() => handleAccountCreation('Terminated')}
-						on:keydown={(event) => {
-							if (event.key === 'Enter') handleAccountCreation('Terminated');
-						}}
-						tabindex="0"
-					>
-						<div class="bg-zinc-900 hover:bg-zinc-700 rounded p-6 flex flex-col items-center">
-							<img src="dead_bunny.png" alt="Switch Icon" class="mb-4 w-16 h-16" />
-							<span class="text-gray-300 font-bold">Create Fail-Safe Switch</span>
-							<p class="text-gray-300">
-								Activate the Fail-Safe Switch, a safety mechanism designed to ensure protection by
-								defaulting to a public state in unexpected situations or failures.
-							</p>
-						</div>
+		<!-- Create Account View -->
+		{#if is_loading === false && has_capsule === false && $actor_capsule.loggedIn}
+			<div class="row-span-5 flex justify-center items-center space-x-6 mx-10">
+				<div
+					role="button"
+					class="card transition-shadow hover:shadow-lg cursor-pointer"
+					on:click={() => handleAccountCreation('Capsule')}
+					on:keydown={(event) => {
+						if (event.key === 'Enter') handleAccountCreation('Capsule');
+					}}
+					tabindex="0"
+				>
+					<div class="bg-zinc-900 hover:bg-zinc-700 rounded p-6 flex flex-col items-center">
+						<img src="time_capsule.png" alt="Capsule Icon" class="mb-4 w-16 h-16" />
+						<span class="text-gray-300 font-bold">Create Identity Time Capsule</span>
+						<p class="text-gray-300">
+							Preserve your memories, moments, or files in a Time Capsule, sealed today and intended
+							for discovery or reflection in the future.
+						</p>
 					</div>
 				</div>
-			{/if}
 
-			<!-- Views -->
-			{#if has_capsule === true}
-				<div class="row-span-5 relative">
-					<div class="overflow-auto max-h-[100vh]">
-						<!-- Actions Bar -->
-						<div class="actions p-4 flex justify-between items-center">
-							<button
-								class="bg-zinc-900 hover:bg-zinc-700 text-white font-bold py-2 px-4 rounded
+				<div
+					role="button"
+					class="card transition-shadow hover:shadow-lg cursor-pointer"
+					on:click={() => handleAccountCreation('Terminated')}
+					on:keydown={(event) => {
+						if (event.key === 'Enter') handleAccountCreation('Terminated');
+					}}
+					tabindex="0"
+				>
+					<div class="bg-zinc-900 hover:bg-zinc-700 rounded p-6 flex flex-col items-center">
+						<img src="dead_bunny.png" alt="Switch Icon" class="mb-4 w-16 h-16" />
+						<span class="text-gray-300 font-bold">Create Fail-Safe Switch</span>
+						<p class="text-gray-300">
+							Activate the Fail-Safe Switch, a safety mechanism designed to ensure protection by
+							defaulting to a public state in unexpected situations or failures.
+						</p>
+					</div>
+				</div>
+			</div>
+		{/if}
+
+		<!-- Views -->
+		{#if is_loading === false && has_capsule === true && $actor_capsule.loggedIn && views.terminated_selected === false}
+			<div class="row-span-5 relative">
+				<div class="overflow-auto max-h-[100vh]">
+					<!-- Actions Bar -->
+					<div class="actions p-4 flex justify-between items-center">
+						<button
+							class="bg-zinc-900 hover:bg-zinc-700 text-white font-bold py-2 px-4 rounded
 								{capsule_ref.is_unlocked == false ? 'opacity-0 pointer-events-none' : ''}"
-								on:click={triggerFileSelectionBrowser}
-							>
-								Upload
-							</button>
+							on:click={triggerFileSelectionBrowser}
+						>
+							Upload
+						</button>
 
-							<span class="flex flex-row gap-x-4">
-								<Icon
-									name="home"
-									on:click={() => {
-										if (capsule_ref.is_unlocked == true) {
-											views = {
-												...views_deselect,
-												home_selected: true
-											};
-										} else {
-											views = {
-												...views_deselect,
-												locked_selected: true
-											};
-										}
-									}}
-								/>
-
-								<Icon
-									name="time"
-									on:click={() => {
+						<span class="flex flex-row gap-x-4">
+							<Icon
+								name="home"
+								on:click={() => {
+									if (capsule_ref.is_unlocked == true) {
 										views = {
 											...views_deselect,
-											time_selected: true
+											home_selected: true
 										};
-									}}
-								/>
-
-								<Icon
-									name="settings"
-									on:click={() => {
+									} else {
 										views = {
 											...views_deselect,
-											settings_selected: true
+											locked_selected: true
 										};
-									}}
-								/>
-							</span>
-						</div>
+									}
+								}}
+							/>
 
-						<!-- Locked View -->
-						{#if views.locked_selected === true}
-							<div class="flex justify-center items-center min-h-screen bg-gray-950">
-								<div class="text-white bg-gray-800 rounded-lg shadow-md p-10">
-									<h1 class="text-4xl font-bold text-center">Capsule is Locked</h1>
-								</div>
+							<Icon
+								name="time"
+								on:click={() => {
+									views = {
+										...views_deselect,
+										time_selected: true
+									};
+								}}
+							/>
+
+							<Icon
+								name="settings"
+								on:click={() => {
+									views = {
+										...views_deselect,
+										settings_selected: true
+									};
+								}}
+							/>
+						</span>
+					</div>
+
+					<!-- Locked View -->
+					{#if views.locked_selected === true}
+						<div class="flex justify-center items-center min-h-screen bg-gray-950">
+							<div class="text-white bg-gray-800 rounded-lg shadow-md p-10">
+								<h1 class="text-4xl font-bold text-center">Capsule is Locked</h1>
 							</div>
-						{/if}
+						</div>
+					{/if}
 
-						<!-- Home View -->
-						{#if views.home_selected === true}
-							<table class="min-w-full text-white">
-								<thead>
+					<!-- Home View -->
+					{#if views.home_selected === true}
+						<table class="min-w-full text-white">
+							<thead>
+								<tr>
+									<th class="py-2 px-4 border-b border-zinc-900 text-left">Filename</th>
+									<th class="py-2 px-4 border-b border-zinc-900 text-left">Created</th>
+									<th class="py-2 px-4 border-b border-zinc-900 text-left">Content Type</th>
+								</tr>
+							</thead>
+							<tbody>
+								{#each files as { filename, created, content_type, url }}
 									<tr>
-										<th class="py-2 px-4 border-b border-zinc-900 text-left">Filename</th>
-										<th class="py-2 px-4 border-b border-zinc-900 text-left">Created</th>
-										<th class="py-2 px-4 border-b border-zinc-900 text-left">Content Type</th>
-									</tr>
-								</thead>
-								<tbody>
-									{#each files as { filename, created, content_type, url }}
-										<tr>
-											<td class="py-2 px-4 border-b border-zinc-900">{filename}</td>
-											<td class="py-2 px-4 border-b border-zinc-900"
-												>{DateTime.fromMillis(Number(created) / 1000000).toLocaleString(
-													DateTime.DATETIME_MED
-												)}</td
+										<td class="py-2 px-4 border-b border-zinc-900">{filename}</td>
+										<td class="py-2 px-4 border-b border-zinc-900"
+											>{DateTime.fromMillis(Number(created) / 1000000).toLocaleString(
+												DateTime.DATETIME_MED
+											)}</td
+										>
+										<td class="py-2 px-4 border-b border-zinc-900">{content_type}</td>
+										<td class="py-2 px-4 border-b border-zinc-900">
+											<button
+												class="bg-zinc-900 hover:bg-zinc-700 text-white font-bold py-2 px-4 rounded"
+												on:click={() => decryptAndDownloadFile(url, filename)}
 											>
-											<td class="py-2 px-4 border-b border-zinc-900">{content_type}</td>
-											<td class="py-2 px-4 border-b border-zinc-900">
-												<button
-													class="bg-zinc-900 hover:bg-zinc-700 text-white font-bold py-2 px-4 rounded"
-													on:click={() => decryptAndDownloadFile(url, filename)}
-												>
-													Download
-												</button>
-											</td>
-										</tr>
-									{/each}
-								</tbody>
-							</table>
-						{/if}
+												Download
+											</button>
+										</td>
+									</tr>
+								{/each}
+							</tbody>
+						</table>
+					{/if}
 
-						<!-- Time View -->
-						{#if views.time_selected === true}
-							<div class="text-white m-10 p-10">
-								{#if 'Capsule' in capsule_ref?.kind}
-									<div class="mb-10 font-medium flex flex-col gap-y-4">
-										<span>
-											<strong>Locked Start:</strong>
-											{#if capsule_ref.locked_start < 2}
-												<p>None</p>
-											{:else}
-												<p>
-													{DateTime.fromMillis(
-														Number(capsule_ref.locked_start) / 1000000
-													).toLocaleString(DateTime.DATETIME_MED)}
-												</p>
-											{/if}
-										</span>
-
-										<span>
-											<strong>Locked:</strong>
-											<p>
-												{capsule_ref.locked_minutes} minutes
-											</p>
-										</span>
-									</div>
-								{/if}
-
-								{#if 'Terminated' in capsule_ref?.kind}
-									<div class="mb-10 font-medium flex flex-col gap-y-4">
-										<span>
-											<strong>Last Login:</strong>
+					<!-- Time View -->
+					{#if views.time_selected === true}
+						<div class="text-white m-10 p-10">
+							{#if 'Capsule' in capsule_ref?.kind}
+								<div class="mb-10 font-medium flex flex-col gap-y-4">
+									<span>
+										<strong>Locked Start:</strong>
+										{#if capsule_ref.locked_start < 2}
+											<p>None</p>
+										{:else}
 											<p>
 												{DateTime.fromMillis(
-													Number(capsule_ref.last_login) / 1000000
+													Number(capsule_ref.locked_start) / 1000000
 												).toLocaleString(DateTime.DATETIME_MED)}
 											</p>
-										</span>
+										{/if}
+									</span>
 
-										<span>
-											<strong>Countdown Constant:</strong>
-											<p>
-												{capsule_ref.countdown_minutes} minutes
-											</p>
-										</span>
-									</div>
-								{/if}
+									<span>
+										<strong>Locked:</strong>
+										<p>
+											{capsule_ref.locked_minutes} minutes
+										</p>
+									</span>
+								</div>
+							{/if}
 
+							{#if 'Terminated' in capsule_ref?.kind}
+								<div class="mb-10 font-medium flex flex-col gap-y-4">
+									<span>
+										<strong>Last Login:</strong>
+										<p>
+											{DateTime.fromMillis(Number(capsule_ref.last_login) / 1000000).toLocaleString(
+												DateTime.DATETIME_MED
+											)}
+										</p>
+									</span>
+
+									<span>
+										<strong>Countdown Constant:</strong>
+										<p>
+											{capsule_ref.countdown_minutes} minutes
+										</p>
+									</span>
+								</div>
+							{/if}
+
+							{#if 'Capsule' in capsule_ref?.kind}
+								<label for="numberInput" class="block mb-2 font-medium">Add Minutes to Lock</label>
+							{/if}
+							{#if 'Terminated' in capsule_ref?.kind}
+								<label for="numberInput" class="block mb-2 font-medium"
+									>Countdown Minutes Constant to Unlock</label
+								>
+							{/if}
+
+							<input
+								id="numberInput"
+								type="number"
+								class="bg-gray-800 p-2 w-1/4 rounded text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-600"
+								bind:value={time_input}
+								on:keydown={(event) => {
+									if (
+										![
+											'0',
+											'1',
+											'2',
+											'3',
+											'4',
+											'5',
+											'6',
+											'7',
+											'8',
+											'9',
+											'Backspace',
+											'ArrowLeft',
+											'ArrowRight',
+											'Tab',
+											'Delete'
+										].includes(event.key)
+									) {
+										event.preventDefault();
+									}
+								}}
+								on:input={(event) => {
+									if (/^\d+$/.test(event.target.value) || event.target.value === '') {
+										time_input = event.target.value;
+									} else {
+										event.target.value = time_input;
+									}
+								}}
+							/>
+
+							<button
+								class="bg-gray-800 hover:bg-gray-600 font-bold ml-4 py-2 px-6 rounded"
+								on:click={handleUpdateCountdown}
+							>
+								Update
+							</button>
+						</div>
+					{/if}
+
+					<!-- Settings View -->
+					{#if views.settings_selected === true}
+						<div class="text-white m-10 p-10">
+							<div class="mb-10">
 								{#if 'Capsule' in capsule_ref?.kind}
-									<label for="numberInput" class="block mb-2 font-medium">Add Minutes to Lock</label
-									>
+									<p><strong>Capsule Kind:</strong> Identity Time Capsule</p>
+									<img src="time_capsule.png" alt="Capsule Icon" class="my-4 w-16 h-16" />
 								{/if}
 								{#if 'Terminated' in capsule_ref?.kind}
-									<label for="numberInput" class="block mb-2 font-medium"
-										>Countdown Minutes Constant to Unlock</label
-									>
+									<p><strong>Capsule Kind:</strong> Terminated Time Capsule</p>
+									<img
+										src="dead_bunny.png"
+										alt="Switch Icon"
+										class="my-4 w-16 h-16 bg-gray-700 rounded-full"
+									/>
 								{/if}
-
-								<input
-									id="numberInput"
-									type="number"
-									class="bg-gray-800 p-2 w-1/4 rounded text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-600"
-									bind:value={time_input}
-									on:keydown={(event) => {
-										if (
-											![
-												'0',
-												'1',
-												'2',
-												'3',
-												'4',
-												'5',
-												'6',
-												'7',
-												'8',
-												'9',
-												'Backspace',
-												'ArrowLeft',
-												'ArrowRight',
-												'Tab',
-												'Delete'
-											].includes(event.key)
-										) {
-											event.preventDefault();
-										}
-									}}
-									on:input={(event) => {
-										if (/^\d+$/.test(event.target.value) || event.target.value === '') {
-											time_input = event.target.value;
-										} else {
-											event.target.value = time_input;
-										}
-									}}
-								/>
-
-								<button
-									class="bg-gray-800 hover:bg-gray-600 font-bold ml-4 py-2 px-6 rounded"
-									on:click={handleUpdateCountdown}
-								>
-									Update
-								</button>
 							</div>
-						{/if}
 
-						<!-- Settings View -->
-						{#if views.settings_selected === true}
-							<div class="text-white m-10 p-10">
-								<div class="mb-10">
-									{#if 'Capsule' in capsule_ref?.kind}
-										<p><strong>Capsule Kind:</strong> Identity Time Capsule</p>
-										<img src="time_capsule.png" alt="Capsule Icon" class="my-4 w-16 h-16" />
-									{/if}
-									{#if 'Terminated' in capsule_ref?.kind}
-										<p><strong>Capsule Kind:</strong> Terminated Time Capsule</p>
-										<img
-											src="dead_bunny.png"
-											alt="Switch Icon"
-											class="my-4 w-16 h-16 bg-gray-700 rounded-full"
-										/>
-									{/if}
-								</div>
-
-								<button
-									class="bg-zinc-900 hover:bg-zinc-700 text-red-500 font-bold py-2 px-4 rounded"
-									on:click={async () => {
-										await auth_logout_all();
-									}}
-								>
-									Logout
-								</button>
-							</div>
-						{/if}
-					</div>
+							<button
+								class="bg-zinc-900 hover:bg-zinc-700 text-red-500 font-bold py-2 px-4 rounded"
+								on:click={async () => {
+									await auth_logout_all();
+									window.location.reload();
+								}}
+							>
+								Logout
+							</button>
+						</div>
+					{/if}
 				</div>
-			{/if}
+			</div>
 		{/if}
 	</div>
 
