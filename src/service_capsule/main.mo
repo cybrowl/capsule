@@ -438,6 +438,7 @@ actor {
 		return #ok(Hex.encode(Blob.toArray(encrypted_key)));
 	};
 
+	// time encryption
 	public shared func encrypted_symmetric_key_by_time(encryption_public_key : Blob, minutes : ?Nat) : async Text {
 		var time : Time = round_to_nearest_ten_minutes(Time.now());
 

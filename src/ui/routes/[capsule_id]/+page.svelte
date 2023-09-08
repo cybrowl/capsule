@@ -71,8 +71,6 @@
 		// vetkey init wasm
 		await init_vetkd_wasm();
 
-		//TODO: check if should show login button
-
 		// capsule doesn't exist / create an account
 		// no encryption / decryption
 		if (error && error.CapsuleNotFound) {
