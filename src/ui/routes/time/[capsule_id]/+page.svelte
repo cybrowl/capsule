@@ -23,18 +23,6 @@
 	let is_loading = false;
 	let is_loading_msg = '';
 
-	let views = {
-		home_selected: true,
-		time_selected: false,
-		locked_selected: false
-	};
-
-	const views_deselect = {
-		home_selected: false,
-		time_selected: false,
-		locked_selected: false
-	};
-
 	let minutes_locked = 10;
 
 	onMount(async () => {
@@ -51,7 +39,10 @@
 		// get owner principal
 		let { ok: capsule, err: error } = await $actor_capsule.actor.get_capsule(capsule_id);
 
-		console.log('capsule: ', capsule);
+		console.group('%cCapsule Information', 'color: blue; font-weight: bold;');
+		console.log('%cCapsule:', 'color: blue;', capsule);
+		console.groupEnd();
+		console.log('error: ', error);
 
 		if (capsule) {
 			capsule_ref = capsule;
@@ -289,56 +280,46 @@
 					The unlock window is available for only 10 minutes at the designated unlock time.
 				</h2>
 
-				{#if views.home_selected === true}
-					<table class="min-w-full text-white">
-						<thead>
+				<table class="min-w-full text-white">
+					<thead>
+						<tr>
+							<th class="py-2 px-4 border-b border-zinc-900 text-left">Filename</th>
+							<th class="py-2 px-4 border-b border-zinc-900 text-left">Created</th>
+							<th class="py-2 px-4 border-b border-zinc-900 text-left">Locked Minutes</th>
+							<th class="py-2 px-4 border-b border-zinc-900 text-left">Unlock Date</th>
+							<th class="py-2 px-4 border-b border-zinc-900 text-left">Content Type</th>
+						</tr>
+					</thead>
+					<tbody>
+						{#each capsule_ref.files as { filename, created, content_type, locked_minutes, url }}
 							<tr>
-								<th class="py-2 px-4 border-b border-zinc-900 text-left">Filename</th>
-								<th class="py-2 px-4 border-b border-zinc-900 text-left">Created</th>
-								<th class="py-2 px-4 border-b border-zinc-900 text-left">Locked Minutes</th>
-								<th class="py-2 px-4 border-b border-zinc-900 text-left">Unlock Date</th>
-								<th class="py-2 px-4 border-b border-zinc-900 text-left">Content Type</th>
-							</tr>
-						</thead>
-						<tbody>
-							{#each capsule_ref.files as { filename, created, content_type, locked_minutes, url }}
-								<tr>
-									<td class="py-2 px-4 border-b border-zinc-900">{filename}</td>
-									<td class="py-2 px-4 border-b border-zinc-900"
-										>{DateTime.fromMillis(Number(created) / 1000000).toLocaleString(
-											DateTime.DATETIME_MED
-										)}</td
-									>
-									<td class="py-2 px-4 border-b border-zinc-900">{locked_minutes}</td>
+								<td class="py-2 px-4 border-b border-zinc-900">{filename}</td>
+								<td class="py-2 px-4 border-b border-zinc-900"
+									>{DateTime.fromMillis(Number(created) / 1000000).toLocaleString(
+										DateTime.DATETIME_MED
+									)}</td
+								>
+								<td class="py-2 px-4 border-b border-zinc-900">{locked_minutes}</td>
+								<td class="py-2 px-4 border-b border-zinc-900">
+									{DateTime.fromMillis(
+										Number(created) / 1000000 + Number(locked_minutes) * 60 * 1000
+									).toLocaleString(DateTime.DATETIME_MED)}
+								</td>
+								<td class="py-2 px-4 border-b border-zinc-900">{content_type}</td>
+								{#if showDownloadButton(created, locked_minutes)}
 									<td class="py-2 px-4 border-b border-zinc-900">
-										{DateTime.fromMillis(
-											Number(created) / 1000000 + Number(locked_minutes) * 60 * 1000
-										).toLocaleString(DateTime.DATETIME_MED)}
+										<button
+											class="bg-zinc-900 hover:bg-zinc-700 text-white font-bold py-2 px-4 rounded"
+											on:click={() => decryptAndDownloadFile(url, filename)}
+										>
+											Download
+										</button>
 									</td>
-									<td class="py-2 px-4 border-b border-zinc-900">{content_type}</td>
-									{#if showDownloadButton(created, locked_minutes)}
-										<td class="py-2 px-4 border-b border-zinc-900">
-											<button
-												class="bg-zinc-900 hover:bg-zinc-700 text-white font-bold py-2 px-4 rounded"
-												on:click={() => decryptAndDownloadFile(url, filename)}
-											>
-												Download
-											</button>
-										</td>
-									{/if}
-								</tr>
-							{/each}
-						</tbody>
-					</table>
-				{/if}
-
-				{#if views.time_selected === true}
-					<div>Time</div>
-				{/if}
-
-				{#if views.locked_selected === true}
-					<div>Locked</div>
-				{/if}
+								{/if}
+							</tr>
+						{/each}
+					</tbody>
+				</table>
 			</div>
 		{/if}
 	</div>
