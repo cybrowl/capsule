@@ -183,7 +183,6 @@ actor {
 					};
 				};
 
-				//TODO: add authorized to return
 				if (Principal.equal(caller, capsule.owner)) {
 					// update last login
 					let capsule_updated : Capsule = {
@@ -466,8 +465,6 @@ actor {
 
 	// symmetric
 	public shared func symmetric_key_verification_key() : async Text {
-		// TODO: if capsule is locked do NOT verify key
-
 		let { public_key } = await vetkd_system_api.vetkd_public_key({
 			canister_id = null;
 			derivation_path = Array.make(Text.encodeUtf8("symmetric_key"));
