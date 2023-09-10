@@ -380,7 +380,7 @@
 					class="bg-zinc-300 hover:bg-stone-100 text-violet-500 font-bold py-4 px-6 rounded"
 					on:click={handleLoginClick}
 				>
-					Identity Login
+					Get Started
 				</button>
 			</div>
 		{/if}
