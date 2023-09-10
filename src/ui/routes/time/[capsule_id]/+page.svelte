@@ -238,7 +238,7 @@
 
 		{#if is_loading === false}
 			<div class="row-span-5 relative">
-				<div class="actions p-4 flex justify-between items-center">
+				<div class="actions p-4 flex items-center flex-row gap-x-4">
 					<button
 						class="bg-zinc-900 hover:bg-zinc-700 text-white font-bold py-2 px-4 rounded"
 						on:click={triggerFileSelectionBrowser}
@@ -246,44 +246,42 @@
 						Upload
 					</button>
 
-					<span class="flex flex-row gap-x-4">
-						<input
-							id="numberInput"
-							type="number"
-							class="bg-gray-800 p-2 w-3/4 rounded text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-600"
-							bind:value={minutes_locked}
-							on:keydown={(event) => {
-								if (
-									![
-										'0',
-										'1',
-										'2',
-										'3',
-										'4',
-										'5',
-										'6',
-										'7',
-										'8',
-										'9',
-										'Backspace',
-										'ArrowLeft',
-										'ArrowRight',
-										'Tab',
-										'Delete'
-									].includes(event.key)
-								) {
-									event.preventDefault();
-								}
-							}}
-							on:input={(event) => {
-								if (/^\d+$/.test(event.target.value) || event.target.value === '') {
-									minutes_locked = Number(event.target.value);
-								} else {
-									event.target.value = minutes_locked;
-								}
-							}}
-						/>
-					</span>
+					<input
+						id="numberInput"
+						type="number"
+						class="bg-gray-800 p-2 w-28 rounded text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-600"
+						bind:value={minutes_locked}
+						on:keydown={(event) => {
+							if (
+								![
+									'0',
+									'1',
+									'2',
+									'3',
+									'4',
+									'5',
+									'6',
+									'7',
+									'8',
+									'9',
+									'Backspace',
+									'ArrowLeft',
+									'ArrowRight',
+									'Tab',
+									'Delete'
+								].includes(event.key)
+							) {
+								event.preventDefault();
+							}
+						}}
+						on:input={(event) => {
+							if (/^\d+$/.test(event.target.value) || event.target.value === '') {
+								minutes_locked = Number(event.target.value);
+							} else {
+								event.target.value = minutes_locked;
+							}
+						}}
+					/>
 				</div>
 				<h2 class="text-yellow-500 m-4">
 					The unlock window is available for only 10 minutes at the designated unlock time.
