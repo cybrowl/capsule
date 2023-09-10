@@ -518,9 +518,16 @@
 
 					<!-- Locked View -->
 					{#if views.locked_selected === true}
-						<div class="flex justify-center items-center min-h-screen bg-gray-950">
-							<div class="text-white bg-gray-800 rounded-lg shadow-md p-10">
-								<h1 class="text-4xl font-bold text-center">Capsule is Locked</h1>
+						<div class="flex justify-center items-center min-h-screen bg-gray-950 p-4">
+							<div class="text-white bg-gray-800 rounded-lg shadow-md p-6">
+								<h1 class="text-4xl font-bold text-center mb-4">Capsule is Locked</h1>
+								<p class="text-center mt-2 mb-2"># Unlock</p>
+								<p class="text-center mt-2">
+									{DateTime.fromMillis(
+										Number(capsule_ref.locked_start) / 1000000 +
+											Number(capsule_ref.locked_minutes) * 60 * 1000
+									).toLocaleString(DateTime.DATETIME_MED)}
+								</p>
 							</div>
 						</div>
 					{/if}
