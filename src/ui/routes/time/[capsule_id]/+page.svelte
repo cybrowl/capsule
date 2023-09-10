@@ -78,6 +78,17 @@
 		is_loading_msg = '';
 	});
 
+	function showDownloadButton(created, locked_minutes) {
+		let unlockTimeMillis = Number(created) / 1000000 + Number(locked_minutes) * 60 * 1000;
+		let currentTimeMillis = DateTime.local().toMillis();
+
+		// Time difference in minutes
+		let timeDifference = (currentTimeMillis - unlockTimeMillis) / (60 * 1000);
+
+		// Return true if the time difference is between 0 to 10
+		return timeDifference >= 0 && timeDifference <= 10;
+	}
+
 	function triggerFileSelectionBrowser(e) {
 		file_input_elem.click();
 	}
@@ -285,6 +296,7 @@
 								<th class="py-2 px-4 border-b border-zinc-900 text-left">Filename</th>
 								<th class="py-2 px-4 border-b border-zinc-900 text-left">Created</th>
 								<th class="py-2 px-4 border-b border-zinc-900 text-left">Locked Minutes</th>
+								<th class="py-2 px-4 border-b border-zinc-900 text-left">Unlock Date</th>
 								<th class="py-2 px-4 border-b border-zinc-900 text-left">Content Type</th>
 							</tr>
 						</thead>
@@ -298,15 +310,22 @@
 										)}</td
 									>
 									<td class="py-2 px-4 border-b border-zinc-900">{locked_minutes}</td>
-									<td class="py-2 px-4 border-b border-zinc-900">{content_type}</td>
 									<td class="py-2 px-4 border-b border-zinc-900">
-										<button
-											class="bg-zinc-900 hover:bg-zinc-700 text-white font-bold py-2 px-4 rounded"
-											on:click={() => decryptAndDownloadFile(url, filename)}
-										>
-											Download
-										</button>
+										{DateTime.fromMillis(
+											Number(created) / 1000000 + Number(locked_minutes) * 60 * 1000
+										).toLocaleString(DateTime.DATETIME_MED)}
 									</td>
+									<td class="py-2 px-4 border-b border-zinc-900">{content_type}</td>
+									{#if showDownloadButton(created, locked_minutes)}
+										<td class="py-2 px-4 border-b border-zinc-900">
+											<button
+												class="bg-zinc-900 hover:bg-zinc-700 text-white font-bold py-2 px-4 rounded"
+												on:click={() => decryptAndDownloadFile(url, filename)}
+											>
+												Download
+											</button>
+										</td>
+									{/if}
 								</tr>
 							{/each}
 						</tbody>
