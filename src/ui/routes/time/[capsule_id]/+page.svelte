@@ -51,6 +51,8 @@
 		// get owner principal
 		let { ok: capsule, err: error } = await $actor_capsule.actor.get_capsule(capsule_id);
 
+		console.log('capsule: ', capsule);
+
 		if (capsule) {
 			capsule_ref = capsule;
 		}

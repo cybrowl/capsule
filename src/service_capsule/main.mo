@@ -150,6 +150,16 @@ actor {
 					};
 				};
 
+				// (TimeEncrypt) execute only if time encrypted
+				if (capsule.kind == #TimeEncrypt) {
+					switch (Map.get(capsules, thash, id)) {
+						case (?capsule) {
+							return #ok(capsule);
+						};
+						case (_) {};
+					};
+				};
+
 				// (Capsule) execute only if is_locked
 				if (capsule.kind == #Capsule and is_unlocked == false) {
 					switch (Map.get(capsules, thash, id)) {
