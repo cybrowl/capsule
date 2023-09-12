@@ -30,6 +30,7 @@
 	let is_loading = false;
 	let is_loading_msg = '';
 	let capsule_login = false;
+	let hide_account_creation = false;
 
 	let views = {
 		home_selected: true,
@@ -89,6 +90,7 @@
 			is_loading = false;
 			is_loading_msg = '';
 			capsule_login = true;
+			hide_account_creation = true;
 
 			return null;
 		}
@@ -420,7 +422,7 @@
 		{/if}
 
 		<!-- Create Account View -->
-		{#if is_loading === false && has_capsule === false && $actor_capsule.loggedIn}
+		{#if is_loading === false && has_capsule === false && $actor_capsule.loggedIn && hide_account_creation === false}
 			<div class="row-span-5 flex justify-center items-center space-x-6 mx-10">
 				<div
 					role="button"
