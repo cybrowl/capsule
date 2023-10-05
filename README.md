@@ -20,6 +20,7 @@ dfx start --clean
 
 cd src/vetkd_utils
 npm i
+npm run build
 
 dfx deploy vetkd_system_api
 dfx deploy file_storage --argument='(false)'
