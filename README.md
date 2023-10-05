@@ -18,6 +18,9 @@ A time-based encryption for revealing things to the world at random.
 npm i
 dfx start --clean
 
+cd src/vetkd_utils
+npm i
+
 dfx deploy vetkd_system_api
 dfx deploy file_storage --argument='(false)'
 dfx deploy capsule
