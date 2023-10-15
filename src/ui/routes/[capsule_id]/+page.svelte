@@ -205,7 +205,7 @@
 	}
 
 	function handleLoginClick() {
-		login(true, handleAuth);
+		login(handleAuth);
 	}
 
 	async function fetchFile(fileUrl) {

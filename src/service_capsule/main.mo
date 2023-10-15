@@ -461,7 +461,7 @@ actor {
 	};
 
 	// NOTE: this changes if in local vs prod
-	let vetkd_system_api : VETKD_SYSTEM_API = actor ("p4cnc-5aaaa-aaaag-abwgq-cai");
+	let vetkd_system_api : VETKD_SYSTEM_API = actor ("bkyz2-fmaaa-aaaaa-qaaaq-cai");
 
 	// symmetric
 	public shared func symmetric_key_verification_key() : async Text {

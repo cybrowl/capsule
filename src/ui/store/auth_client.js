@@ -2,6 +2,16 @@ import { writable } from 'svelte/store';
 import { AuthClient } from '@dfinity/auth-client';
 import { actor_capsule, actor_file_storage, createActor } from '$stores_ref/actors';
 
+import environment from 'environment';
+
+const env = environment();
+
+let isProd = false;
+
+if (env['DFX_NETWORK'] === 'ic' || env['DFX_NETWORK'] === 'staging') {
+	isProd = true;
+}
+
 export const auth_actors = {};
 export const crypto_service = writable({});
 
@@ -41,11 +51,11 @@ export async function init_auth() {
 }
 
 // login
-export async function login(isProd, handleAuth) {
+export async function login(handleAuth) {
 	auth_client.login({
 		identityProvider: isProd
 			? 'https://identity.ic0.app/#authorize'
-			: 'http://cpmcr-yeaaa-aaaaa-qaala-cai.localhost:8080/',
+			: 'http://b77ix-eeaaa-aaaaa-qaada-cai.localhost:8080/',
 		maxTimeToLive: BigInt(30 * 24 * 60 * 60 * 1000 * 1000 * 1000 * 1000),
 		onSuccess: handleAuth
 	});
